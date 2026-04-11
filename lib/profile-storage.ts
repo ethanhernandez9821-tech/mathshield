@@ -84,6 +84,10 @@ function makeId() {
   return `user-${Date.now()}`;
 }
 
+function normalizeUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
 export function subscribeToProfileChanges(callback: () => void) {
   if (!canUseStorage()) {
     return () => {};
@@ -118,6 +122,7 @@ export function signUpUser({
   password: string;
 }) {
   const cleanName = username.trim();
+  const normalizedName = normalizeUsername(username);
   const cleanEmail = email.trim().toLowerCase();
   const cleanPassword = password.trim();
 
@@ -128,6 +133,9 @@ export function signUpUser({
   const users = readUsers();
   if (users.some((user) => user.email === cleanEmail)) {
     return { ok: false as const, error: "That email is already being used." };
+  }
+  if (users.some((user) => normalizeUsername(user.username) === normalizedName)) {
+    return { ok: false as const, error: "That username is already taken." };
   }
 
   const user: StoredUser = {

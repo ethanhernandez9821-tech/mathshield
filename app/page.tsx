@@ -35,7 +35,7 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open a section fast.</h1>
             <p className="dashboard-copy">
-              Sign in to earn XP, track your time in Drift Boss, and level up through your profile.
+              Sign in to earn XP, track your time, and jump between original arcade builds and math-lab mini games.
             </p>
 
             <div className="action-row">
@@ -54,14 +54,14 @@ export default function Home() {
           <div className="quick-grid">
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
-              <h2>Featured games</h2>
-              <p>Jump straight into the arcade page, search the lineup, and launch the daily featured game.</p>
+              <h2>Playable lineup</h2>
+              <p>Open the arcade page, search the lineup, and launch the daily featured game or any original build.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
               <p className="section-kicker">Math Lab</p>
-              <h2>Build queue</h2>
-              <p>See the current math roadmap and what is planned to be added next.</p>
+              <h2>Math mini games</h2>
+              <p>Train memory, logic, spelling, and arithmetic in short rounds built directly into the site.</p>
             </Link>
           </div>
 
@@ -69,7 +69,7 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>The featured arcade pick updates once per day as more arcade titles get added.</p>
+              <p>The featured arcade pick updates once per day across the playable arcade lineup.</p>
             </article>
 
             <article className="info-card">

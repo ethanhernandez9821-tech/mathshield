@@ -1,6 +1,28 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import GameCard from "@/components/GameCard";
 import TopBar from "@/components/TopBar";
+import { games } from "@/data/games";
+import { isPlayableGame } from "@/lib/playable-games";
 
 export default function GamesPage() {
+  const [search, setSearch] = useState("");
+
+  const mathGames = useMemo(() => {
+    return games
+      .filter((game) => game.category === "math")
+      .filter((game) => {
+        const q = search.toLowerCase().trim();
+        if (!q) return true;
+
+        return (
+          game.title.toLowerCase().includes(q) ||
+          game.description.toLowerCase().includes(q)
+        );
+      });
+  }, [search]);
+
   return (
     <main className="page-shell">
       <TopBar />
@@ -8,23 +30,43 @@ export default function GamesPage() {
       <section className="page-hero page-hero--compact">
         <div>
           <p className="section-kicker">Math Lab</p>
-          <h1 className="arcade-title">Math lab roadmap</h1>
-          <p className="arcade-copy">This page tracks the next math games coming into MathShield.</p>
+          <h1 className="arcade-title">Math lab games</h1>
+          <p className="arcade-copy">
+            These are the logic, math, language, and strategy-style games now playable directly inside MathShield.
+          </p>
         </div>
       </section>
 
-      <section className="roadmap-grid">
-        <article className="roadmap-card roadmap-card--cyan">
-          <p className="section-kicker">Planned Modules</p>
-          <h2>Speed math rounds</h2>
-          <p>Quick score-based drills designed for fast practice and easy replay.</p>
-        </article>
+      <div className="search-bar-wrap">
+        <input
+          className="ui-input"
+          type="text"
+          placeholder="Search math lab..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
-        <article className="roadmap-card roadmap-card--orange">
-          <p className="section-kicker">Build Queue</p>
-          <h2>Logic and pattern games</h2>
-          <p>Reasoning-first challenges are next once the current arcade polish is settled.</p>
-        </article>
+      <section className="library-grid">
+        {mathGames.length > 0 ? (
+          mathGames.map((game) => (
+            <GameCard
+              key={game.slug}
+              slug={game.slug}
+              title={game.title}
+              description={game.description}
+              thumbnail={game.thumbnail}
+              hrefBase="/games"
+              category={game.category}
+              status={isPlayableGame(game.slug) ? "live" : game.status}
+            />
+          ))
+        ) : (
+          <div className="empty-library">
+            <h2>No math lab matches</h2>
+            <p>Try a shorter search.</p>
+          </div>
+        )}
       </section>
     </main>
   );

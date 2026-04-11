@@ -31,8 +31,7 @@ export default function GamesPage() {
           <p className="section-kicker">Math Lab</p>
           <h1 className="arcade-title">Math lab games</h1>
           <p className="arcade-copy">
-            2048 is live now as a real imported open-source game, and the rest of the logic and math picks stay in the
-            queue until they have proper source code.
+            Math Lab only shows real imported puzzle games too. Right now the live math import is 2048.
           </p>
         </div>
       </section>
@@ -41,7 +40,7 @@ export default function GamesPage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search math lab..."
+          placeholder="Search imported math games..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

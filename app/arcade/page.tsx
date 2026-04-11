@@ -35,8 +35,8 @@ export default function ArcadePage() {
           <p className="section-kicker">Arcade Lab</p>
           <h1 className="arcade-title">Arcade lineup</h1>
           <p className="arcade-copy">
-            Drift Boss is live, and the rest of the Coolmath-style picks stay in the lineup as planned imports until
-            they have real source code behind them.
+            Every card here is a real imported browser game with actual HTML5 source behind it. No filler cards, no
+            fake playables.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function ArcadePage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search arcade lab..."
+          placeholder="Search imported arcade games..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

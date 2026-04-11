@@ -1,5 +1,4 @@
 import { getGameBySlug, type GameTheme } from "@/data/games";
-import { isPlayableGame } from "@/lib/playable-games";
 
 function escapeXml(value: string) {
   return value
@@ -89,9 +88,7 @@ export async function GET(_: Request, context: { params: Promise<{ slug: string 
       )}</text>
       ${lineMarkup}
       <text x="44" y="560" font-size="26" font-family="Arial, sans-serif" fill="rgba(255,255,255,0.88)">${escapeXml(
-        isPlayableGame(game.slug) || game.status === "live"
-          ? "Playable now in MathShield"
-          : "Catalog card ready - build/import next"
+        game.status === "live" ? "Playable now in MathShield" : "Catalog card ready"
       )}</text>
     </svg>
   `;

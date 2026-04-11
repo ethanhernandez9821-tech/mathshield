@@ -35,8 +35,8 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open a section fast.</h1>
             <p className="dashboard-copy">
-              Sign in to earn XP, track your time, and jump between live imported games, Drift Boss, and the next games
-              queued for MathShield.
+              Sign in to earn XP, track your time, and jump between real imported HTML5 games instead of placeholder
+              cards.
             </p>
 
             <div className="action-row">
@@ -55,14 +55,14 @@ export default function Home() {
           <div className="quick-grid">
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
-              <h2>Live + planned arcade</h2>
-              <p>Open the arcade page, search the lineup, and jump into the live games while the rest stay clearly marked.</p>
+              <h2>Real imported arcade</h2>
+              <p>Open the arcade page and jump straight into Drift Boss, Pac-Man, Asteroids, Breakout, Pong, Boulder Dash, and Tetris.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
               <p className="section-kicker">Math Lab</p>
               <h2>Imported math games</h2>
-              <p>Play real puzzle imports like 2048 and browse the math-lab games that are still waiting on source code.</p>
+              <p>Math Lab stays clean and only lists real imported puzzle games like 2048.</p>
             </Link>
           </div>
 
@@ -70,7 +70,7 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>The featured arcade pick updates once per day across the playable arcade lineup.</p>
+              <p>The featured arcade pick updates once per day across the imported arcade lineup.</p>
             </article>
 
             <article className="info-card">

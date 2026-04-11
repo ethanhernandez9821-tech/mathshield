@@ -7,7 +7,6 @@ import GameCard from "@/components/GameCard";
 import TopBar from "@/components/TopBar";
 import { games } from "@/data/games";
 import { getDailyFeaturedGame } from "@/lib/featured-game";
-import { isPlayableGame } from "@/lib/playable-games";
 
 export default function ArcadePage() {
   const [search, setSearch] = useState("");
@@ -36,8 +35,8 @@ export default function ArcadePage() {
           <p className="section-kicker">Arcade Lab</p>
           <h1 className="arcade-title">Arcade lineup</h1>
           <p className="arcade-copy">
-            The arcade now mixes Drift Boss with original playable MathShield builds inspired by the Coolmath-style
-            games you picked.
+            Drift Boss is live, and the rest of the Coolmath-style picks stay in the lineup as planned imports until
+            they have real source code behind them.
           </p>
         </div>
 
@@ -78,7 +77,7 @@ export default function ArcadePage() {
               description={game.description}
               thumbnail={game.thumbnail}
               category={game.category}
-              status={isPlayableGame(game.slug) ? "live" : game.status}
+              status={game.status}
             />
           ))
         ) : (

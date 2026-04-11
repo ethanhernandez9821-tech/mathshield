@@ -1,8 +1,7 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
-import PlayableGameLab from "@/components/PlayableGameLab";
 import TopBar from "@/components/TopBar";
 import { getGameBySlug } from "@/data/games";
-import { getPlayableGameConfig } from "@/lib/playable-games";
 
 export default async function ArcadeGamePage({
   params,
@@ -11,13 +10,8 @@ export default async function ArcadeGamePage({
 }) {
   const { slug } = await params;
   const game = getGameBySlug(slug);
-  const config = getPlayableGameConfig(slug);
 
   if (!game || game.category !== "arcade" || game.slug === "drift-boss") {
-    notFound();
-  }
-
-  if (!config) {
     notFound();
   }
 
@@ -33,7 +27,25 @@ export default async function ArcadeGamePage({
         </div>
       </section>
 
-      <PlayableGameLab game={game} config={config} />
+      <section className="coming-layout">
+        <div className="coming-poster">
+          <Image src={game.thumbnail} alt={game.title} fill className="object-cover" unoptimized />
+        </div>
+
+        <aside className="coming-card">
+          <p className="section-kicker">Status</p>
+          <h2>{game.status === "live" ? "Playable now" : "Coming soon"}</h2>
+          <p>
+            This arcade title has a real card and artwork, but it is staying in the catalog until it has actual
+            imported or properly built game code behind it.
+          </p>
+          <div className="tag-row">
+            <span className="tag">Catalog ready</span>
+            <span className="tag">Image ready</span>
+            <span className="tag">Waiting on real game code</span>
+          </div>
+        </aside>
+      </section>
     </main>
   );
 }

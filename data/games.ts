@@ -518,6 +518,15 @@ export const games: Game[] = [
     theme: "cyan",
   },
   {
+    slug: "2048",
+    title: "2048",
+    description: "A real imported number puzzle where matching tiles merge into bigger values until you reach 2048.",
+    category: "math",
+    thumbnail: "/thumbs/2048",
+    status: "live",
+    theme: "gold",
+  },
+  {
     slug: "typing-racer",
     title: "Typing Racer",
     description: "Race faster by typing cleanly and keeping mistakes low under pressure.",

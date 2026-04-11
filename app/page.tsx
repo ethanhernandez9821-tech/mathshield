@@ -35,7 +35,8 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open a section fast.</h1>
             <p className="dashboard-copy">
-              Sign in to earn XP, track your time, and jump between original arcade builds and math-lab mini games.
+              Sign in to earn XP, track your time, and jump between live imported games, Drift Boss, and the next games
+              queued for MathShield.
             </p>
 
             <div className="action-row">
@@ -54,14 +55,14 @@ export default function Home() {
           <div className="quick-grid">
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
-              <h2>Playable lineup</h2>
-              <p>Open the arcade page, search the lineup, and launch the daily featured game or any original build.</p>
+              <h2>Live + planned arcade</h2>
+              <p>Open the arcade page, search the lineup, and jump into the live games while the rest stay clearly marked.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
               <p className="section-kicker">Math Lab</p>
-              <h2>Math mini games</h2>
-              <p>Train memory, logic, spelling, and arithmetic in short rounds built directly into the site.</p>
+              <h2>Imported math games</h2>
+              <p>Play real puzzle imports like 2048 and browse the math-lab games that are still waiting on source code.</p>
             </Link>
           </div>
 

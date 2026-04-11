@@ -1,8 +1,7 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
-import PlayableGameLab from "@/components/PlayableGameLab";
 import TopBar from "@/components/TopBar";
 import { getGameBySlug } from "@/data/games";
-import { getPlayableGameConfig } from "@/lib/playable-games";
 
 export default async function MathGamePage({
   params,
@@ -11,13 +10,8 @@ export default async function MathGamePage({
 }) {
   const { slug } = await params;
   const game = getGameBySlug(slug);
-  const config = getPlayableGameConfig(slug);
 
   if (!game || game.category !== "math") {
-    notFound();
-  }
-
-  if (!config) {
     notFound();
   }
 
@@ -33,7 +27,25 @@ export default async function MathGamePage({
         </div>
       </section>
 
-      <PlayableGameLab game={game} config={config} />
+      <section className="coming-layout">
+        <div className="coming-poster">
+          <Image src={game.thumbnail} alt={game.title} fill className="object-cover" unoptimized />
+        </div>
+
+        <aside className="coming-card">
+          <p className="section-kicker">Status</p>
+          <h2>{game.status === "live" ? "Playable now" : "Coming soon"}</h2>
+          <p>
+            This title is in the MathShield catalog, but only imported or fully built games get the real playable
+            treatment. More open-source imports are next.
+          </p>
+          <div className="tag-row">
+            <span className="tag">Catalog ready</span>
+            <span className="tag">Image ready</span>
+            <span className="tag">Waiting on real game code</span>
+          </div>
+        </aside>
+      </section>
     </main>
   );
 }

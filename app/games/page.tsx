@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import GameCard from "@/components/GameCard";
 import TopBar from "@/components/TopBar";
 import { games } from "@/data/games";
-import { isPlayableGame } from "@/lib/playable-games";
 
 export default function GamesPage() {
   const [search, setSearch] = useState("");
@@ -32,7 +31,8 @@ export default function GamesPage() {
           <p className="section-kicker">Math Lab</p>
           <h1 className="arcade-title">Math lab games</h1>
           <p className="arcade-copy">
-            These are the logic, math, language, and strategy-style games now playable directly inside MathShield.
+            2048 is live now as a real imported open-source game, and the rest of the logic and math picks stay in the
+            queue until they have proper source code.
           </p>
         </div>
       </section>
@@ -58,7 +58,7 @@ export default function GamesPage() {
               thumbnail={game.thumbnail}
               hrefBase="/games"
               category={game.category}
-              status={isPlayableGame(game.slug) ? "live" : game.status}
+              status={game.status}
             />
           ))
         ) : (

@@ -478,6 +478,10 @@ a {
   background: #000;
 }
 
+.game-embed--crosshair {
+  cursor: crosshair;
+}
+
 .note-card {
   display: grid;
   gap: 12px;

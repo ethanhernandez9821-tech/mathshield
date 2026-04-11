@@ -33,10 +33,10 @@ export default function Home() {
         <div className="dashboard-stack">
           <section className="welcome-panel">
             <p className="section-kicker">Quick Start</p>
-            <h1 className="dashboard-title">Open a section fast.</h1>
+            <h1 className="dashboard-title">Open the action lineup fast.</h1>
             <p className="dashboard-copy">
-              Sign in to earn XP, track your time, and jump between real imported HTML5 games instead of placeholder
-              cards.
+              Arcade Lab now leans into imported shooters, zombie pressure, bot combat, and tower defense. Math Lab
+              stays smaller and cleaner.
             </p>
 
             <div className="action-row">
@@ -55,8 +55,8 @@ export default function Home() {
           <div className="quick-grid">
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
-              <h2>Real imported arcade</h2>
-              <p>Open the arcade page and jump straight into Drift Boss, Pac-Man, Asteroids, Breakout, Pong, Boulder Dash, and Tetris.</p>
+              <h2>Imported combat games</h2>
+              <p>Jump into bot shooters, zombie waves, mouse-aim survival runs, and tower defense maps without filler cards.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
@@ -70,19 +70,19 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>The featured arcade pick updates once per day across the imported arcade lineup.</p>
+              <p>The featured arcade pick rotates once per day across the live imported lineup.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">XP System</p>
-              <h3>Sign in to earn</h3>
-              <p>XP only counts while you are logged in, and your challenge progress saves to your profile.</p>
+              <p className="section-kicker">Shooter Mix</p>
+              <h3>Crosshair + pressure</h3>
+              <p>The action side now centers on mouse-aim combat, survival loops, and cleaner imported arcade fights.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Profile</p>
-              <h3>Levels + default pfp</h3>
-              <p>Your profile now shows a default avatar, level, XP total, and saved Drift Boss time.</p>
+              <p className="section-kicker">Defense Maps</p>
+              <h3>Tower defense is in</h3>
+              <p>Arcade Lab now includes live tower-defense and tower-control games instead of only small retro classics.</p>
             </article>
           </div>
         </div>
@@ -114,10 +114,10 @@ export default function Home() {
 
           <section className="side-card">
             <p className="section-kicker">What Changed</p>
-            <h3>XP is now part of the site</h3>
+            <h3>Arcade got sharper</h3>
             <p>
-              Login and sign up are no longer just placeholders. You can create an account, sign in, and start
-              saving progress.
+              The arcade is shifting toward real imported action games, survival shooters, and defense-heavy picks
+              instead of the old retro filler.
             </p>
           </section>
         </aside>

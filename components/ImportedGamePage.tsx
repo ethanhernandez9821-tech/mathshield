@@ -11,6 +11,7 @@ type ImportedGamePageProps = {
   howToPlay: string;
   tags: string[];
   sourceNote: string;
+  crosshair?: boolean;
 };
 
 export default function ImportedGamePage({
@@ -23,6 +24,7 @@ export default function ImportedGamePage({
   howToPlay,
   tags,
   sourceNote,
+  crosshair = false,
 }: ImportedGamePageProps) {
   return (
     <main className="page-shell">
@@ -42,7 +44,12 @@ export default function ImportedGamePage({
             <span className="poster-chip">{license}</span>
             <span className="frame-status">Imported and playable</span>
           </div>
-          <iframe src={src} title={title} className="game-embed" allowFullScreen />
+          <iframe
+            src={src}
+            title={title}
+            className={`game-embed${crosshair ? " game-embed--crosshair" : ""}`}
+            allowFullScreen
+          />
         </div>
 
         <aside className="note-card">

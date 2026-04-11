@@ -1,0 +1,4459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="app-version" content="0.1" />
+  <title>Enemy Showcase - Top-Down Survival Shooter</title>
+  <link rel="stylesheet" href="./static-pages.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Enemy Behavior Showcase</h1>
+      <p class="sub">Animated mini-simulations of every enemy archetype. This page is documentation-only and does not affect game progression.</p>
+      <nav class="top-links" aria-label="Static page navigation">
+<a href="./game.html">Play Game</a>
+<a href="./perk-library.html">Perk Library</a>
+<a href="./showcase.html" aria-current="page">Enemy Showcase</a>
+<a href="./skills-showcase.html">Skill Showcase</a>
+      </nav>
+    </section>
+
+    <section class="stage" aria-label="Enemy showcase stage">
+      <div class="stage-head">
+        <h2 class="stage-title">
+          <span id="showcase-title">Enemy</span>
+          <span id="showcase-badge" class="chip"></span>
+        </h2>
+        <label class="picker-wrap" for="enemy-picker">
+          Enemy
+          <select id="enemy-picker" aria-label="Select enemy type"></select>
+        </label>
+      </div>
+      <canvas id="showcase-canvas" width="820" height="420"></canvas>
+      <div class="stage-body">
+        <div id="showcase-description"></div>
+        <div id="showcase-legend" class="legend"></div>
+        <div id="showcase-stats" class="stats" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <footer>
+      Generated from game build 0.1. <a href="https://github.com/GIider/top-down-survival-shooter">GitHub Repository</a>
+    </footer>
+  </main>
+
+  <script>
+"use strict";
+(() => {
+  // src/config/gameConfig.js
+  var GAME_CONFIG = {
+    canvas: {
+      width: 1280,
+      height: 720,
+      background: "#0f1720"
+    },
+    ui: {
+      legends: {
+        pickupRows: [
+          ["\u2764\uFE0F Health", "Restore 10 HP"],
+          ["\u{1F504} Magazine", "Reload the gun instantly"],
+          ["\u{1F4A3} Nuke", "Expanding wipe that clears enemies"],
+          ["\u23F1\uFE0F CD", "Refresh all skill cooldowns"],
+          ["\u{1F621} Rage", "Boost damage and move speed"],
+          ["\u267E\uFE0F Infinite Ammo", "Unlimited gun shots for a short time"]
+        ],
+        controlRows: [
+          ["WASD", "Move"],
+          ["Mouse", "Aim / attack"],
+          ["1 / 2 / 3 / 4", "Sword / Gun / Bow / Flail"],
+          ["Q / E / F", "Blink / Shout / Fireball"],
+          ["R", "Reload"],
+          ["Space", "Pause / Resume"]
+        ]
+      },
+      pause: {
+        panelBottomOffset: 184,
+        panelWidth: 396,
+        controlsPanelX: 34,
+        pickupPanelRightOffset: 430
+      },
+      title: {
+        headingY: 58,
+        versionY: 78,
+        history: {
+          maxVisibleRuns: 10,
+          widthMax: 960,
+          widthMargin: 180,
+          height: 352,
+          y: 108,
+          buttonGap: 10,
+          buttonY: 48,
+          rowStartY: 98,
+          rowHeight: 24
+        },
+        startButton: {
+          width: 260,
+          height: 36,
+          bottomOffset: 64
+        },
+        libraryToggle: {
+          width: 192,
+          height: 30,
+          rightOffset: 230,
+          bottomOffset: 58
+        },
+        controlsPanel: {
+          x: 34,
+          width: 396,
+          bottomOffset: 184
+        }
+      },
+      perkLibrary: {
+        modalInsetX: 58,
+        modalInsetY: 44,
+        closeButton: {
+          width: 110,
+          height: 28,
+          topOffset: 16,
+          rightOffset: 130
+        },
+        filter: {
+          x: 20,
+          y: 56,
+          width: 220,
+          height: 28,
+          optionHeight: 24
+        },
+        cards: {
+          topOffset: 98,
+          bottomOffset: 56,
+          gap: 10,
+          height: 56
+        },
+        scroll: {
+          trackRightOffset: 12,
+          trackWidth: 6,
+          minThumbHeight: 36
+        }
+      }
+    },
+    perks: {
+      tags: ["projectile", "precision", "aoe", "chain", "survival", "reload", "mobility", "flail"],
+      synergyFactor: 3,
+      penaltyFactor: 2,
+      tierCount: 8,
+      applyHealOnPickup: 8,
+      minBaseMaxHp: 40,
+      libraries: {
+        projectile: {
+          prefix: "Ballistic",
+          description: "Boosts projectile damage and velocity.",
+          damageBase: 0.03,
+          damagePerTier: 0.01,
+          speedBase: 0.02,
+          speedPerTier: 0.01
+        },
+        precision: {
+          prefix: "Marksman",
+          description: "Increases crit chance and tightens spread.",
+          critBase: 0.015,
+          critPerTier: 4e-3,
+          critCap: 0.55,
+          spreadReduction: 0.025,
+          spreadMin: 0.35
+        },
+        aoe: {
+          prefix: "Shockwave",
+          description: "Adds area damage radius to hits.",
+          radiusBase: 6,
+          radiusPerTier: 1.5
+        },
+        chain: {
+          prefix: "Arc",
+          description: "Adds chance to chain lightning to nearby enemies.",
+          chanceBase: 0.015,
+          chancePerTier: 3e-3,
+          chanceCap: 0.5
+        },
+        survival: {
+          prefix: "Bulwark",
+          description: "Raises max HP and grants minor lifesteal.",
+          hpBase: 5,
+          hpPerTier: 2,
+          lifestealBase: 4e-3,
+          lifestealPerTier: 1e-3,
+          lifestealCap: 0.22
+        },
+        reload: {
+          prefix: "Tactical",
+          description: "Improves reload speed and magazine size.",
+          reloadBase: 0.05,
+          reloadPerTier: 0.015,
+          ammoEveryEvenTier: 1
+        },
+        mobility: {
+          prefix: "Strider",
+          description: "Increases movement and pickup radius.",
+          speedBase: 0.04,
+          speedPerTier: 0.01,
+          pickupBase: 2,
+          pickupPerTier: 1
+        }
+      },
+      special: {
+        frenziedRitual: {
+          fireRate: 0.35,
+          maxHpPenalty: 6
+        },
+        vampireCircuit: {
+          lifeSteal: 0.08,
+          lifeStealCap: 0.3
+        },
+        kineticPrism: {
+          damage: 0.14,
+          projectileSpeed: 0.12,
+          chainChance: 0.06,
+          chainCap: 0.5
+        },
+        combatTrance: {
+          moveSpeed: 0.12,
+          spreadReduction: 0.1,
+          spreadMin: 0.3
+        }
+      }
+    },
+    balance: {
+      xpScaling: 1.5,
+      spawnScaling: 0.02,
+      healDropChance: 0.1,
+      baseEnemyContactDamage: 14,
+      projectileSpeed: 740,
+      projectileLifetime: 1.4
+    },
+    player: {
+      speed: 280,
+      radius: 16,
+      baseHp: 100,
+      baseXpToNext: 60,
+      levelUpXpMultiplier: 1.5,
+      baseCritMultiplier: 1.5,
+      levelUpPerkPoints: 1,
+      perkSelectionLockDuration: 0.5,
+      gameOverAnimationTime: 1.1
+    },
+    drops: {
+      heal: {
+        baseValue: 8,
+        difficultyScale: 0.4,
+        lifetime: 5,
+        radius: 10,
+        pickupBaseBonus: 12
+      }
+    },
+    skills: {
+      blink: {
+        key: "q",
+        icon: "\u{1F4A8}",
+        label: "Blink",
+        distance: 200,
+        cooldown: 5,
+        effect: {
+          radius: 10,
+          duration: 0.28,
+          growth: 26,
+          color: "120, 226, 255"
+        }
+      },
+      shout: {
+        key: "e",
+        icon: "\u{1F5E3}\uFE0F",
+        label: "Shout",
+        cooldown: 10,
+        radius: 250,
+        stunDuration: 1,
+        screenShake: 1.8,
+        screenFlash: 0.1,
+        reflectMinSpeed: 340,
+        reflectColor: "#8ff8ff",
+        reflectedLifetimeMin: 1.2,
+        wave: {
+          duration: 0.34,
+          thickness: 42
+        },
+        castEffect: {
+          radius: 20,
+          duration: 0.28,
+          growth: 36,
+          color: "160, 250, 245"
+        },
+        reflectImpactEffect: {
+          radius: 8,
+          duration: 0.16,
+          growth: 18,
+          color: "170, 255, 246"
+        },
+        stunImpactEffect: {
+          duration: 0.22,
+          growth: 20,
+          color: "180, 244, 255"
+        }
+      },
+      fireball: {
+        key: "f",
+        icon: "\u{1F525}",
+        label: "Fireball",
+        cooldown: 7,
+        speed: 280,
+        radius: 16,
+        directDamage: 26,
+        splashDamage: 38,
+        splashRadius: 132,
+        lifetime: 3,
+        castEffect: {
+          radius: 12,
+          duration: 0.24,
+          growth: 22,
+          color: "255, 168, 98"
+        },
+        detonation: {
+          screenShake: 2.8,
+          screenFlash: 0.16,
+          hitStop: 0.035,
+          effects: [
+            { radius: 16, duration: 0.3, growth: 46, color: "255, 158, 92" },
+            { radiusFactor: 0.42, duration: 0.48, growth: 36, color: "255, 216, 120" },
+            { radius: 18, duration: 0.24, growth: 22, color: "255, 244, 186" }
+          ]
+        }
+      }
+    },
+    weapons: {
+      gun: {
+        type: "projectile",
+        damage: 18,
+        fireRate: 6,
+        spread: 0.045,
+        magazineSize: 12,
+        reloadTime: 1.6,
+        perfectReloadWindow: [0.45, 0.6],
+        projectileSpeedMultiplier: 1.22,
+        ammoBarDuration: 0.8,
+        reloadFeedback: {
+          perfectDuration: 0.28,
+          missDuration: 0.4
+        }
+      },
+      bow: {
+        chargeWindow: [0.7, 0.8],
+        chargeTime: 1.05,
+        reloadTime: 0.5,
+        minDamage: 22,
+        maxDamage: 70,
+        minSpeed: 520,
+        maxSpeed: 980,
+        fullChargeThreshold: 0.98,
+        perfectStrength: 1,
+        fullChargeStrength: 0.82,
+        strengthBase: 0.06,
+        strengthScale: 0.34,
+        projectileLifetime: 1.8,
+        cooldown: 0.16,
+        perfectRadius: 6,
+        normalRadius: 5,
+        perfectPierce: 999,
+        perfectColor: "#8afff4",
+        normalColor: "#9be2ff"
+      },
+      melee: {
+        comboResetTime: 0.72,
+        combo: [
+          {
+            damage: 28,
+            range: 74,
+            innerRange: 16,
+            arc: Math.PI * 0.92,
+            startup: 0.065,
+            duration: 0.24,
+            cooldown: 0.3,
+            color: "110, 244, 255"
+          },
+          {
+            damage: 34,
+            range: 88,
+            innerRange: 20,
+            arc: Math.PI * 0.72,
+            startup: 0.085,
+            duration: 0.27,
+            cooldown: 0.34,
+            color: "142, 255, 186"
+          },
+          {
+            damage: 46,
+            range: 102,
+            innerRange: 24,
+            arc: Math.PI * 0.62,
+            startup: 0.11,
+            duration: 0.31,
+            cooldown: 0.42,
+            color: "255, 228, 124"
+          }
+        ]
+      },
+      flail: {
+        targetRadius: 112,
+        maxRange: 178,
+        headRadius: 12,
+        chainHitRadius: 5,
+        springStrength: 70,
+        drag: 5.8,
+        tangentialRetention: 0.95,
+        minDamage: 2,
+        maxDamage: 46,
+        baseChainDamage: 2,
+        chainSpeedFactor: 4,
+        minImpactSpeed: 90,
+        maxImpactSpeed: 520,
+        minKnockback: 110,
+        maxKnockback: 420,
+        onHitVelocityMultiplier: 0.6,
+        perEnemyHitCooldown: 0.12,
+        chainPerEnemyHitCooldown: 0.18,
+        chainSegments: 8,
+        chainVisualWidth: 3,
+        trailInterval: 0.018,
+        trailLifetime: 0.22
+      }
+    },
+    enemies: {
+      spawn: {
+        recycleDistanceMultiplier: 1.8,
+        offscreenRespawnAfter: 2.8,
+        randomRespawnDelay: { min: 0.45, max: 1.35 },
+        aggressiveRespawnDelay: { min: 0.08, max: 0.28 },
+        spawnPadding: 120,
+        offscreenPadding: 40,
+        movementLookAhead: {
+          speedThreshold: 25,
+          speedMax: 340,
+          base: 110,
+          extra: 120
+        },
+        rateBase: 0.55,
+        rateStageScale: 0.16,
+        rateDifficultyScale: 0.9,
+        maxEnemiesBase: 10,
+        maxEnemiesStageScale: 4,
+        maxEnemiesDifficultyScale: 6,
+        weights: [
+          { type: "chaser", weight: 42, minStage: 1 },
+          { type: "slime", weight: 14, minStage: 1, options: { tier: 0 } },
+          { type: "shooter", weight: 20, minStage: 1 },
+          { type: "assaultShooter", weight: 13, minStage: 1 },
+          { type: "shotgunShooter", weight: 11, minStage: 1 },
+          { type: "bomber", weight: 12, minStage: 1 },
+          { type: "mortar", weight: 8, minStage: 1 },
+          { type: "flyingBomber", weight: 7, minStage: 1 }
+        ]
+      },
+      ai: {
+        predictiveAimChance: 0.45,
+        mortarDangerRadius: 64,
+        mortarTelegraphDuration: 0.72,
+        mortarTargetSpread: 96,
+        mortarTargetJitter: 54,
+        bomberSlowFactorWhenPrimed: 0.45,
+        spawnBoostMultiplier: 1.45,
+        spawnBoostTime: { min: 2, max: 3 },
+        enemySeparationIterations: 2,
+        enemySeparationStrength: 0.85,
+        enemySeparationPaddingFactor: 0.94
+      },
+      archetypes: {
+        chaser: {
+          hpBase: 30,
+          hpDifficultyScale: 2,
+          speedBase: 150,
+          speedDifficultyScale: 3,
+          radius: 14,
+          color: "#ff8a9f",
+          contactDamage: 14,
+          xp: 10
+        },
+        shooter: {
+          hpBase: 42,
+          hpDifficultyScale: 3,
+          speedBase: 120,
+          speedDifficultyScale: 2,
+          radius: 16,
+          color: "#ffb574",
+          fireCooldown: 1.4,
+          preferredDistance: 210,
+          contactDamage: 16,
+          xp: 16,
+          projectile: { speed: 340, damage: 11, lifetime: 2.6, radius: 5, color: "#ff8d6d" }
+        },
+        assaultShooter: {
+          hpBase: 36,
+          hpDifficultyScale: 3,
+          speedBase: 134,
+          speedDifficultyScale: 2,
+          radius: 15,
+          color: "#ff996d",
+          fireCooldown: 2.3,
+          preferredDistance: 250,
+          burstCount: 10,
+          burstInterval: 0.07,
+          waveAmplitude: 30,
+          waveFrequency: 1.15,
+          aimJitter: 0.04,
+          contactDamage: 12,
+          xp: 20,
+          projectile: { speed: 360, damage: 7, lifetime: 2.2, radius: 4, color: "#ff9f7a", speedVariance: 0.1 }
+        },
+        shotgunShooter: {
+          hpBase: 38,
+          hpDifficultyScale: 3,
+          speedBase: 126,
+          speedDifficultyScale: 2,
+          radius: 16,
+          color: "#ff7f5f",
+          fireCooldown: 1.8,
+          preferredDistance: 190,
+          pelletCount: 7,
+          pelletSpread: 0.55,
+          contactDamage: 14,
+          xp: 22,
+          projectile: { speed: 320, damage: 6, lifetime: 1.3, radius: 4, color: "#ff8c66" }
+        },
+        mortar: {
+          hpBase: 52,
+          hpDifficultyScale: 4,
+          speedBase: 92,
+          speedDifficultyScale: 1,
+          radius: 18,
+          color: "#f09a6a",
+          throwCooldown: 2.5,
+          throwTimer: 0.7,
+          preferredDistance: 330,
+          throwRange: 520,
+          contactDamage: 20,
+          xp: 30,
+          impactDamage: 20
+        },
+        bomber: {
+          hpBase: 24,
+          hpDifficultyScale: 2,
+          speedBase: 220,
+          speedDifficultyScale: 4,
+          radius: 12,
+          color: "#ff6a82",
+          contactDamage: 10,
+          explosionRadius: 78,
+          explosionDamage: 24,
+          detonationRange: 46,
+          fuseDuration: 0.22,
+          xp: 18,
+          deathEffects: {
+            screenShake: 2.2,
+            screenFlash: 0.2,
+            effects: [
+              { radius: 16, duration: 0.34, growth: 34, color: "255, 118, 140" },
+              { radiusFactor: 0.52, duration: 0.45, growth: 14, color: "255, 190, 162" }
+            ]
+          }
+        },
+        flyingBomber: {
+          hpBase: 32,
+          hpDifficultyScale: 3,
+          radius: 11,
+          color: "#ff2244",
+          flySpeed: 840,
+          warningDuration: 1.2,
+          bombInterval: 120,
+          bombRadius: 72,
+          bombDamage: 22,
+          bombTelegraphDuration: 0.38,
+          contactDamage: 20,
+          xp: 28
+        },
+        slime: {
+          maxTier: 3,
+          splitCount: 2,
+          hpByTier: [34, 20, 12, 7],
+          hpDifficultyScaleByTier: [1.4, 1.2, 1, 0.8],
+          speedByTier: [95, 118, 142, 164],
+          radiusByTier: [18, 13, 9, 6],
+          xpByTier: [18, 10, 6, 3],
+          contactDamageByTier: [16, 11, 8, 6],
+          colorByTier: ["#7ded8f", "#65d97f", "#55bf70", "#44a862"]
+        }
+      }
+    },
+    world: {
+      chunkSize: 480,
+      maxChunkCache: 140,
+      obstaclePadding: 86,
+      visiblePadding: 80,
+      mountains: {
+        countMaxExclusive: 3,
+        radiusMin: 34,
+        radiusRange: 32,
+        edgePadding: 50,
+        spacing: 24,
+        attempts: 8
+      },
+      trees: {
+        countBase: 3,
+        countRange: 6,
+        radiusMin: 14,
+        radiusRange: 13,
+        edgePadding: 30,
+        spacing: 10,
+        attempts: 8,
+        slowMultiplier: 0.55,
+        burnDuration: 3.5,
+        burnDamagePerSecond: 18
+      }
+    }
+  };
+
+  // src/core/constants.js
+  var CANVAS = GAME_CONFIG.canvas;
+  var TAGS = GAME_CONFIG.perks.tags;
+  var BALANCE = {
+    ...GAME_CONFIG.balance,
+    perfectReloadWindow: GAME_CONFIG.weapons.gun.perfectReloadWindow,
+    playerSpeed: GAME_CONFIG.player.speed,
+    playerRadius: GAME_CONFIG.player.radius,
+    baseWeapon: GAME_CONFIG.weapons.gun
+  };
+
+  // src/entities/enemy.js
+  function getPickupDropMultiplier(type, options = {}) {
+    if (type === "chaser") {
+      return 0.32;
+    }
+    if (type === "slime") {
+      const tier = Math.max(0, options.tier || 0);
+      const multipliers = [0, 0, 0, 0.12];
+      return multipliers[Math.min(tier, multipliers.length - 1)];
+    }
+    if (type === "shooter") {
+      return 0.8;
+    }
+    if (type === "assaultShooter") {
+      return 1.05;
+    }
+    if (type === "shotgunShooter") {
+      return 1.1;
+    }
+    if (type === "bomber") {
+      return 0.95;
+    }
+    if (type === "flyingBomber") {
+      return 1.1;
+    }
+    if (type === "mortar") {
+      return 1.3;
+    }
+    return 1;
+  }
+  function createEnemy(type, x, y, difficulty, options = {}) {
+    const enemyConfig = GAME_CONFIG.enemies.archetypes;
+    const shooterHp = enemyConfig.shooter.hpBase + difficulty * enemyConfig.shooter.hpDifficultyScale;
+    const assaultShooterHp = enemyConfig.assaultShooter.hpBase + difficulty * enemyConfig.assaultShooter.hpDifficultyScale;
+    const shotgunShooterHp = enemyConfig.shotgunShooter.hpBase + difficulty * enemyConfig.shotgunShooter.hpDifficultyScale;
+    const mortarHp = enemyConfig.mortar.hpBase + difficulty * enemyConfig.mortar.hpDifficultyScale;
+    const bomberHp = enemyConfig.bomber.hpBase + difficulty * enemyConfig.bomber.hpDifficultyScale;
+    const chaserHp = enemyConfig.chaser.hpBase + difficulty * enemyConfig.chaser.hpDifficultyScale;
+    const flyingBomberHp = enemyConfig.flyingBomber.hpBase + difficulty * enemyConfig.flyingBomber.hpDifficultyScale;
+    const recycleState = {
+      isRespawning: false,
+      respawnTimer: 0,
+      offscreenTime: 0,
+      spawnBoostTimer: GAME_CONFIG.enemies.ai.spawnBoostTime.min + Math.random() * (GAME_CONFIG.enemies.ai.spawnBoostTime.max - GAME_CONFIG.enemies.ai.spawnBoostTime.min),
+      spawnBoostMultiplier: GAME_CONFIG.enemies.ai.spawnBoostMultiplier,
+      pickupDropMultiplier: getPickupDropMultiplier(type, options)
+    };
+    if (type === "shooter") {
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        hp: shooterHp,
+        maxHp: shooterHp,
+        speed: enemyConfig.shooter.speedBase + difficulty * enemyConfig.shooter.speedDifficultyScale,
+        radius: enemyConfig.shooter.radius,
+        color: enemyConfig.shooter.color,
+        fireCooldown: enemyConfig.shooter.fireCooldown,
+        fireTimer: 0,
+        preferredDistance: enemyConfig.shooter.preferredDistance,
+        contactDamage: enemyConfig.shooter.contactDamage,
+        xp: enemyConfig.shooter.xp,
+        ...recycleState
+      };
+    }
+    if (type === "mortar") {
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        hp: mortarHp,
+        maxHp: mortarHp,
+        speed: enemyConfig.mortar.speedBase + difficulty * enemyConfig.mortar.speedDifficultyScale,
+        radius: enemyConfig.mortar.radius,
+        color: enemyConfig.mortar.color,
+        throwCooldown: enemyConfig.mortar.throwCooldown,
+        throwTimer: enemyConfig.mortar.throwTimer,
+        preferredDistance: enemyConfig.mortar.preferredDistance,
+        throwRange: enemyConfig.mortar.throwRange,
+        contactDamage: enemyConfig.mortar.contactDamage,
+        xp: enemyConfig.mortar.xp,
+        ...recycleState
+      };
+    }
+    if (type === "assaultShooter") {
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        hp: assaultShooterHp,
+        maxHp: assaultShooterHp,
+        speed: enemyConfig.assaultShooter.speedBase + difficulty * enemyConfig.assaultShooter.speedDifficultyScale,
+        radius: enemyConfig.assaultShooter.radius,
+        color: enemyConfig.assaultShooter.color,
+        fireCooldown: enemyConfig.assaultShooter.fireCooldown,
+        fireTimer: 0.8,
+        preferredDistance: enemyConfig.assaultShooter.preferredDistance,
+        burstCount: enemyConfig.assaultShooter.burstCount,
+        burstShotsRemaining: 0,
+        burstInterval: enemyConfig.assaultShooter.burstInterval,
+        burstTimer: 0,
+        waveAmplitude: enemyConfig.assaultShooter.waveAmplitude,
+        waveFrequency: enemyConfig.assaultShooter.waveFrequency,
+        waveSeed: Math.random() * Math.PI * 2,
+        aimJitter: enemyConfig.assaultShooter.aimJitter,
+        projectileSpeed: enemyConfig.assaultShooter.projectile.speed,
+        projectileDamage: enemyConfig.assaultShooter.projectile.damage,
+        projectileLifetime: enemyConfig.assaultShooter.projectile.lifetime,
+        contactDamage: enemyConfig.assaultShooter.contactDamage,
+        xp: enemyConfig.assaultShooter.xp,
+        ...recycleState
+      };
+    }
+    if (type === "shotgunShooter") {
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        hp: shotgunShooterHp,
+        maxHp: shotgunShooterHp,
+        speed: enemyConfig.shotgunShooter.speedBase + difficulty * enemyConfig.shotgunShooter.speedDifficultyScale,
+        radius: enemyConfig.shotgunShooter.radius,
+        color: enemyConfig.shotgunShooter.color,
+        fireCooldown: enemyConfig.shotgunShooter.fireCooldown,
+        fireTimer: 0.9,
+        preferredDistance: enemyConfig.shotgunShooter.preferredDistance,
+        pelletCount: enemyConfig.shotgunShooter.pelletCount,
+        pelletSpread: enemyConfig.shotgunShooter.pelletSpread,
+        projectileSpeed: enemyConfig.shotgunShooter.projectile.speed,
+        projectileDamage: enemyConfig.shotgunShooter.projectile.damage,
+        projectileLifetime: enemyConfig.shotgunShooter.projectile.lifetime,
+        contactDamage: enemyConfig.shotgunShooter.contactDamage,
+        xp: enemyConfig.shotgunShooter.xp,
+        ...recycleState
+      };
+    }
+    if (type === "slime") {
+      const slimeConfig = enemyConfig.slime;
+      const maxSlimeTier = slimeConfig.maxTier;
+      const tier = Math.max(0, Math.min(maxSlimeTier, options.tier || 0));
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        hp: slimeConfig.hpByTier[tier] + difficulty * slimeConfig.hpDifficultyScaleByTier[tier],
+        maxHp: slimeConfig.hpByTier[tier] + difficulty * slimeConfig.hpDifficultyScaleByTier[tier],
+        speed: slimeConfig.speedByTier[tier] + difficulty * 2,
+        radius: slimeConfig.radiusByTier[tier],
+        color: slimeConfig.colorByTier[tier],
+        contactDamage: slimeConfig.contactDamageByTier[tier],
+        xp: slimeConfig.xpByTier[tier],
+        slimeTier: tier,
+        maxSlimeTier,
+        splitCount: slimeConfig.splitCount,
+        ...recycleState
+      };
+    }
+    if (type === "bomber") {
+      return {
+        type,
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        hp: bomberHp,
+        maxHp: bomberHp,
+        speed: enemyConfig.bomber.speedBase + difficulty * enemyConfig.bomber.speedDifficultyScale,
+        radius: enemyConfig.bomber.radius,
+        color: enemyConfig.bomber.color,
+        contactDamage: enemyConfig.bomber.contactDamage,
+        explosionRadius: enemyConfig.bomber.explosionRadius,
+        explosionDamage: enemyConfig.bomber.explosionDamage,
+        detonationRange: enemyConfig.bomber.detonationRange,
+        fuseDuration: enemyConfig.bomber.fuseDuration,
+        fuseTimer: 0,
+        isPrimed: false,
+        xp: enemyConfig.bomber.xp,
+        ...recycleState
+      };
+    }
+    if (type === "flyingBomber") {
+      const flyConfig = enemyConfig.flyingBomber;
+      return {
+        type,
+        x: options.fromX !== void 0 ? options.fromX : x,
+        y: options.fromY !== void 0 ? options.fromY : y,
+        vx: 0,
+        vy: 0,
+        hp: flyingBomberHp,
+        maxHp: flyingBomberHp,
+        radius: flyConfig.radius,
+        color: flyConfig.color,
+        contactDamage: flyConfig.contactDamage,
+        xp: flyConfig.xp,
+        flyDirX: options.dirX || 0,
+        flyDirY: options.dirY || 1,
+        flyFromX: options.fromX !== void 0 ? options.fromX : x,
+        flyFromY: options.fromY !== void 0 ? options.fromY : y,
+        flyExitX: options.exitX !== void 0 ? options.exitX : x,
+        flyExitY: options.exitY !== void 0 ? options.exitY : y,
+        flyPhase: "warning",
+        warningTimer: flyConfig.warningDuration,
+        warningDuration: flyConfig.warningDuration,
+        distTraveled: 0,
+        bombDistAccum: 0,
+        isDone: false,
+        skipRecycle: true,
+        ...recycleState
+      };
+    }
+    return {
+      type: "chaser",
+      x,
+      y,
+      vx: 0,
+      vy: 0,
+      hp: chaserHp,
+      maxHp: chaserHp,
+      speed: enemyConfig.chaser.speedBase + difficulty * enemyConfig.chaser.speedDifficultyScale,
+      radius: enemyConfig.chaser.radius,
+      color: enemyConfig.chaser.color,
+      contactDamage: enemyConfig.chaser.contactDamage,
+      xp: enemyConfig.chaser.xp,
+      ...recycleState
+    };
+  }
+
+  // src/core/runHistory.js
+  function sortRunHistory(history, sortMode) {
+    const list = [...history];
+    if (sortMode === "time") {
+      return list.sort((a, b) => b.timeSurvived - a.timeSurvived || b.kills - a.kills || b.startedAt - a.startedAt);
+    }
+    if (sortMode === "kills") {
+      return list.sort((a, b) => b.kills - a.kills || b.timeSurvived - a.timeSurvived || b.startedAt - a.startedAt);
+    }
+    return list.sort((a, b) => b.startedAt - a.startedAt);
+  }
+  function formatRunStartedAt(timestamp) {
+    try {
+      return new Date(timestamp).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    } catch {
+      return String(timestamp);
+    }
+  }
+
+  // src/core/render/panels.js
+  function renderPickupLegendPanel(ctx2, x, y, width, wrapTextLines2) {
+    const rowsConfig = GAME_CONFIG.ui.legends.pickupRows;
+    ctx2.save();
+    ctx2.textAlign = "left";
+    const headerHeight = 28;
+    const nameColumnWidth = 118;
+    const effectX = x + 18 + nameColumnWidth;
+    const effectWidth = width - nameColumnWidth - 30;
+    const rows = rowsConfig.map(([name, effect]) => {
+      ctx2.font = "12px monospace";
+      const effectLines = wrapTextLines2(ctx2, effect, effectWidth);
+      const rowHeight = Math.max(24, effectLines.length * 14 + 10);
+      return { name, effectLines, rowHeight };
+    });
+    const contentHeight = rows.reduce((sum, row) => sum + row.rowHeight, 0);
+    const height = headerHeight + contentHeight;
+    ctx2.fillStyle = "rgba(8, 18, 29, 0.9)";
+    ctx2.fillRect(x, y, width, height);
+    ctx2.strokeStyle = "rgba(150, 228, 255, 0.35)";
+    ctx2.lineWidth = 1.5;
+    ctx2.strokeRect(x, y, width, height);
+    ctx2.fillStyle = "rgba(88, 171, 206, 0.15)";
+    ctx2.fillRect(x, y, width, headerHeight);
+    ctx2.save();
+    ctx2.beginPath();
+    ctx2.rect(x + 1, y + 1, width - 2, height - 2);
+    ctx2.clip();
+    ctx2.fillStyle = "#d8f6ff";
+    ctx2.font = "bold 11px monospace";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText("Pickup", x + 14, y + headerHeight * 0.5);
+    ctx2.fillText("Effect", effectX, y + headerHeight * 0.5);
+    ctx2.font = "12px monospace";
+    let rowY = y + headerHeight;
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i];
+      ctx2.strokeStyle = "rgba(150, 228, 255, 0.12)";
+      ctx2.beginPath();
+      ctx2.moveTo(x, rowY);
+      ctx2.lineTo(x + width, rowY);
+      ctx2.stroke();
+      ctx2.fillStyle = "#f2fbff";
+      ctx2.fillText(row.name, x + 14, rowY + 15);
+      ctx2.fillStyle = "#cfe5f0";
+      for (let lineIndex = 0; lineIndex < row.effectLines.length; lineIndex += 1) {
+        ctx2.fillText(row.effectLines[lineIndex], effectX, rowY + 15 + lineIndex * 14);
+      }
+      rowY += row.rowHeight;
+    }
+    ctx2.restore();
+    ctx2.textBaseline = "alphabetic";
+    ctx2.textAlign = "start";
+    ctx2.restore();
+  }
+  function renderControlsLegendPanel(ctx2, x, y, width, wrapTextLines2, title = "Controls") {
+    const rowsConfig = GAME_CONFIG.ui.legends.controlRows;
+    ctx2.save();
+    ctx2.textAlign = "left";
+    const headerHeight = 28;
+    const keyColumnWidth = 112;
+    const actionX = x + 18 + keyColumnWidth;
+    const actionWidth = width - keyColumnWidth - 30;
+    const rows = rowsConfig.map(([keys, action]) => {
+      ctx2.font = "12px monospace";
+      const actionLines = wrapTextLines2(ctx2, action, actionWidth);
+      const rowHeight = Math.max(24, actionLines.length * 14 + 10);
+      return { keys, actionLines, rowHeight };
+    });
+    const contentHeight = rows.reduce((sum, row) => sum + row.rowHeight, 0);
+    const height = headerHeight + contentHeight;
+    ctx2.fillStyle = "rgba(8, 18, 29, 0.9)";
+    ctx2.fillRect(x, y, width, height);
+    ctx2.strokeStyle = "rgba(150, 228, 255, 0.35)";
+    ctx2.lineWidth = 1.5;
+    ctx2.strokeRect(x, y, width, height);
+    ctx2.fillStyle = "rgba(88, 171, 206, 0.15)";
+    ctx2.fillRect(x, y, width, headerHeight);
+    ctx2.save();
+    ctx2.beginPath();
+    ctx2.rect(x + 1, y + 1, width - 2, height - 2);
+    ctx2.clip();
+    ctx2.fillStyle = "#d8f6ff";
+    ctx2.font = "bold 11px monospace";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText("Key", x + 14, y + headerHeight * 0.5);
+    ctx2.fillText(title, actionX, y + headerHeight * 0.5);
+    ctx2.font = "12px monospace";
+    let rowY = y + headerHeight;
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i];
+      ctx2.strokeStyle = "rgba(150, 228, 255, 0.12)";
+      ctx2.beginPath();
+      ctx2.moveTo(x, rowY);
+      ctx2.lineTo(x + width, rowY);
+      ctx2.stroke();
+      ctx2.fillStyle = "#f2fbff";
+      ctx2.fillText(row.keys, x + 14, rowY + 15);
+      ctx2.fillStyle = "#cfe5f0";
+      for (let lineIndex = 0; lineIndex < row.actionLines.length; lineIndex += 1) {
+        ctx2.fillText(row.actionLines[lineIndex], actionX, rowY + 15 + lineIndex * 14);
+      }
+      rowY += row.rowHeight;
+    }
+    ctx2.restore();
+    ctx2.textBaseline = "alphabetic";
+    ctx2.textAlign = "start";
+    ctx2.restore();
+  }
+  function renderTitleHistoryPanel(ctx2, gameState, x, y, width, height) {
+    const titleUi = GAME_CONFIG.ui.title.history;
+    const sortModes = [
+      { key: "latest", label: "Latest Runs" },
+      { key: "time", label: "Longest Time" },
+      { key: "kills", label: "Most Kills" }
+    ];
+    const history = sortRunHistory(gameState.runHistory || [], gameState.runHistorySort || "latest").slice(0, titleUi.maxVisibleRuns);
+    const buttonWidth = (width - titleUi.buttonGap * 2 - 32) / 3;
+    const buttonY = y + titleUi.buttonY;
+    const rowStartY = y + titleUi.rowStartY;
+    const rowHeight = titleUi.rowHeight;
+    gameState.titleSortRects = sortModes.map((mode, index) => ({
+      sort: mode.key,
+      x: x + 16 + index * (buttonWidth + titleUi.buttonGap),
+      y: buttonY,
+      width: buttonWidth,
+      height: 28
+    }));
+    ctx2.fillStyle = "rgba(9, 18, 29, 0.9)";
+    ctx2.fillRect(x, y, width, height);
+    ctx2.strokeStyle = "rgba(136, 228, 255, 0.28)";
+    ctx2.lineWidth = 2;
+    ctx2.strokeRect(x, y, width, height);
+    ctx2.fillStyle = "#dff8ff";
+    ctx2.font = "bold 24px monospace";
+    ctx2.textAlign = "left";
+    ctx2.fillText("Run History", x + 16, y + 32);
+    for (let i = 0; i < gameState.titleSortRects.length; i += 1) {
+      const rect = gameState.titleSortRects[i];
+      const active = rect.sort === gameState.runHistorySort;
+      ctx2.fillStyle = active ? "rgba(48, 92, 120, 0.92)" : "rgba(24, 37, 52, 0.88)";
+      ctx2.fillRect(rect.x, rect.y, rect.width, rect.height);
+      ctx2.strokeStyle = active ? "rgba(154, 236, 255, 0.9)" : "rgba(108, 146, 174, 0.6)";
+      ctx2.lineWidth = 1.5;
+      ctx2.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      ctx2.fillStyle = active ? "#effcff" : "#b8d4e6";
+      ctx2.font = "bold 12px monospace";
+      ctx2.textAlign = "center";
+      ctx2.textBaseline = "middle";
+      ctx2.fillText(sortModes[i].label, rect.x + rect.width * 0.5, rect.y + rect.height * 0.5 + 1);
+    }
+    ctx2.textAlign = "left";
+    ctx2.textBaseline = "alphabetic";
+    ctx2.fillStyle = "#9ec5da";
+    ctx2.font = "11px monospace";
+    ctx2.fillText("Started", x + 16, rowStartY - 10);
+    ctx2.fillText("Time", x + 220, rowStartY - 10);
+    ctx2.fillText("Kills", x + 310, rowStartY - 10);
+    if (history.length === 0) {
+      ctx2.fillStyle = "#b9d0df";
+      ctx2.font = "14px monospace";
+      ctx2.fillText("No runs recorded yet.", x + 16, rowStartY + 20);
+      return;
+    }
+    for (let i = 0; i < history.length; i += 1) {
+      const entry = history[i];
+      const rowY = rowStartY + i * rowHeight;
+      ctx2.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)";
+      ctx2.fillRect(x + 12, rowY - 15, width - 24, rowHeight);
+      ctx2.fillStyle = "#eff7fb";
+      ctx2.font = "12px monospace";
+      ctx2.fillText(formatRunStartedAt(entry.startedAt), x + 16, rowY);
+      ctx2.fillText(`${entry.timeSurvived.toFixed(1)}s`, x + 220, rowY);
+      ctx2.fillText(String(entry.kills), x + 310, rowY);
+      ctx2.fillStyle = "#88aeca";
+      ctx2.font = "10px monospace";
+      ctx2.fillText(`v${entry.version || "0.0"}`, x + width - 56, rowY);
+    }
+  }
+
+  // src/systems/perks/skillPerkCatalog.js
+  var skillPerkCatalog = [
+    {
+      id: "blink-aim-behind",
+      name: "Backstep Vector",
+      description: "Blink aims 180 degrees behind your cursor.",
+      tags: ["blink"]
+    },
+    {
+      id: "blink-target-explosion",
+      name: "Blink Implosion",
+      description: "Blink creates a stun explosion at the target location.",
+      tags: ["blink"]
+    },
+    {
+      id: "blink-source-explosion",
+      name: "Blink Echo",
+      description: "Blink creates a stun explosion at your source location.",
+      tags: ["blink"]
+    },
+    {
+      id: "blink-reload",
+      name: "Tactical Warp",
+      description: "Blinking instantly reloads your gun.",
+      tags: ["blink"]
+    },
+    {
+      id: "blink-fire-trail",
+      name: "Scorch Line",
+      description: "Blink leaves a lingering fire trail that damages enemies.",
+      tags: ["blink", "fire"]
+    },
+    {
+      id: "blink-ice-trail",
+      name: "Frost Line",
+      description: "Blink leaves a lingering ice trail that slows enemies.",
+      tags: ["blink", "ice"]
+    },
+    {
+      id: "blink-sword-kensei",
+      name: "Kensei",
+      description: "Blinking through enemies with your sword equipped damages them as a sword strike without advancing combo.",
+      tags: ["blink", "melee"]
+    },
+    {
+      id: "blink-three-charges",
+      name: "Triple Blink",
+      description: "Blink gains 3 charges and regenerates one per cooldown.",
+      tags: ["blink"]
+    },
+    {
+      id: "shout-range",
+      name: "Resonant Cone",
+      description: "Increase shout range.",
+      tags: ["shout"]
+    },
+    {
+      id: "shout-stun",
+      name: "Concussive Voice",
+      description: "Increase shout stun duration.",
+      tags: ["shout"]
+    },
+    {
+      id: "shout-reflect",
+      name: "Reflective Chorus",
+      description: "Shout reflects enemy projectiles.",
+      tags: ["shout"]
+    },
+    {
+      id: "shout-half-max-hp",
+      name: "Thunder Lungs",
+      description: "Shout deals 50% of each affected enemy's max HP as damage.",
+      tags: ["shout"]
+    },
+    {
+      id: "shout-heal-per-enemy",
+      name: "War Cry Renewal",
+      description: "Shout heals 10 HP for each enemy affected.",
+      tags: ["shout", "survival"]
+    },
+    {
+      id: "fireball-impact-detonation",
+      name: "Impact Burst",
+      description: "Fireball detonates on enemy impact.",
+      tags: ["fireball", "fire"]
+    },
+    {
+      id: "fireball-bigger-detonation",
+      name: "Overpressure Core",
+      description: "Fireball detonation radius and damage are increased.",
+      tags: ["fireball", "fire"]
+    },
+    {
+      id: "fireball-impact-fire-trail",
+      name: "Cinder Field",
+      description: "Fireball detonation spawns a lingering fire field.",
+      tags: ["fireball", "fire"]
+    },
+    {
+      id: "gun-triple-shot",
+      name: "Scatter Cylinder",
+      description: "Gun fires a spread of 3 bullets per shot.",
+      tags: ["gun"]
+    },
+    {
+      id: "gun-backward-shot",
+      name: "Crossfire Drill",
+      description: "Gun also fires backward.",
+      tags: ["gun"]
+    },
+    {
+      id: "gun-perfect-window",
+      name: "Calibrated Timing",
+      description: "Increase gun perfect reload window by 25%.",
+      tags: ["gun"]
+    },
+    {
+      id: "gun-kill-reload",
+      name: "Battle Feed",
+      description: "Killing an enemy with a gun bullet restores 1 ammo.",
+      tags: ["gun"]
+    },
+    {
+      id: "gun-bouncing-bullets",
+      name: "Ricochet Rounds",
+      description: "Gun bullets bounce off enemies and mountains up to 3 times.",
+      tags: ["gun"]
+    },
+    {
+      id: "gun-perfect-speed",
+      name: "Flow Reload",
+      description: "Perfect reload grants 10% movement speed for 1 second.",
+      tags: ["gun"]
+    },
+    {
+      id: "melee-projectile-reflect",
+      name: "Deflecting Edge",
+      description: "Melee slashes now reflect enemy projectiles.",
+      tags: ["melee"]
+    },
+    {
+      id: "melee-skill-cooldown-kill",
+      name: "Blade Tempo",
+      description: "Melee kills reduce all skill cooldowns by 10%.",
+      tags: ["melee", "utility"]
+    },
+    {
+      id: "flail-spiked-links",
+      name: "Spiked Links",
+      description: "Flail chain chip damage is significantly increased.",
+      tags: ["flail", "melee", "chain"]
+    },
+    {
+      id: "flail-counterweight-core",
+      name: "Counterweight Core",
+      description: "Flail head and chain hits deal increased damage.",
+      tags: ["flail", "melee"]
+    },
+    {
+      id: "flail-rebound-discipline",
+      name: "Rebound Discipline",
+      description: "Hitting different enemies in quick succession boosts flail momentum.",
+      tags: ["flail", "melee", "mobility"]
+    },
+    {
+      id: "bow-perfect-window",
+      name: "Steady Draw",
+      description: "Increase perfect arrow window by 25%.",
+      tags: ["bow"]
+    },
+    {
+      id: "bow-kill-reload",
+      name: "Predator's Rhythm",
+      description: "Arrow kills instantly finish bow reload.",
+      tags: ["bow"]
+    },
+    {
+      id: "bow-ricochet-chain",
+      name: "Hunting Ricochet",
+      description: "Perfect arrows no longer pierce and instead bounce to closest enemy (max 5).",
+      tags: ["bow"]
+    },
+    {
+      id: "bow-fire-arrows",
+      name: "Kindled Fletching",
+      description: "Arrows deal 25% extra damage and ignite trees.",
+      tags: ["bow", "fire"]
+    },
+    {
+      id: "shared-laser-pointer",
+      name: "Laserpointer",
+      description: "Gun and bow draw a targeting laser toward your aim.",
+      tags: ["gun", "bow"]
+    },
+    {
+      id: "pickup-magnet",
+      name: "Vacuum Grip",
+      description: "Pickups slowly move toward you.",
+      tags: ["utility"]
+    },
+    {
+      id: "pickup-global-cooldown-reduction",
+      name: "Supply Chain",
+      description: "Reduce pickup global cooldown timers by 20%.",
+      tags: ["utility"]
+    },
+    {
+      id: "utility-stunned-target-damage",
+      name: "Execution Momentum",
+      description: "Deal 50% more damage to stunned enemies.",
+      tags: ["utility"]
+    },
+    {
+      id: "utility-regen-half-hp",
+      name: "Second Wind",
+      description: "Slowly regenerate HP up to 50% max HP.",
+      tags: ["utility", "survival"]
+    }
+  ];
+
+  // src/core/render/titleOverlays.js
+  function renderPerkLibraryOverlay(ctx2, canvas2, gameState, wrapTextLines2, isDebugMode = false) {
+    const ui = GAME_CONFIG.ui.perkLibrary;
+    const totalPerks = skillPerkCatalog.length;
+    let seenCount = 0;
+    let acquiredCount = 0;
+    for (let i = 0; i < skillPerkCatalog.length; i += 1) {
+      const perk = skillPerkCatalog[i];
+      const acquired = isDebugMode || !!gameState.perkProgress.activated[perk.id];
+      const seen = isDebugMode || !!gameState.perkProgress.seen[perk.id];
+      if (acquired) {
+        acquiredCount += 1;
+        continue;
+      }
+      if (seen) {
+        seenCount += 1;
+      }
+    }
+    const notSeenCount = Math.max(0, totalPerks - acquiredCount - seenCount);
+    const allTags = /* @__PURE__ */ new Set();
+    for (let i = 0; i < skillPerkCatalog.length; i += 1) {
+      const perk = skillPerkCatalog[i];
+      for (let tagIndex = 0; tagIndex < (perk.tags || []).length; tagIndex += 1) {
+        allTags.add(perk.tags[tagIndex]);
+      }
+    }
+    const filterOptions = ["all", ...Array.from(allTags).sort()];
+    if (!filterOptions.includes(gameState.titlePerkLibraryFilter)) {
+      gameState.titlePerkLibraryFilter = "all";
+    }
+    const filterTag = gameState.titlePerkLibraryFilter || "all";
+    const filteredPerks = skillPerkCatalog.filter((perk) => filterTag === "all" || (perk.tags || []).includes(filterTag));
+    ctx2.fillStyle = "rgba(4, 8, 14, 0.8)";
+    ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+    const modalX = ui.modalInsetX;
+    const modalY = ui.modalInsetY;
+    const modalWidth = canvas2.width - ui.modalInsetX * 2;
+    const modalHeight = canvas2.height - ui.modalInsetY * 2;
+    gameState.titlePerkLibraryModalRect = {
+      x: modalX,
+      y: modalY,
+      width: modalWidth,
+      height: modalHeight
+    };
+    ctx2.fillStyle = "rgba(9, 18, 29, 0.97)";
+    ctx2.fillRect(modalX, modalY, modalWidth, modalHeight);
+    ctx2.strokeStyle = "rgba(136, 228, 255, 0.46)";
+    ctx2.lineWidth = 2;
+    ctx2.strokeRect(modalX, modalY, modalWidth, modalHeight);
+    ctx2.fillStyle = "#dff8ff";
+    ctx2.font = "bold 28px monospace";
+    ctx2.textAlign = "left";
+    ctx2.textBaseline = "alphabetic";
+    ctx2.fillText("Perk Library", modalX + 20, modalY + 40);
+    const closeRect = {
+      x: modalX + modalWidth - ui.closeButton.rightOffset,
+      y: modalY + ui.closeButton.topOffset,
+      width: ui.closeButton.width,
+      height: ui.closeButton.height
+    };
+    gameState.titlePerkLibraryCloseRect = closeRect;
+    ctx2.fillStyle = "rgba(52, 34, 42, 0.9)";
+    ctx2.fillRect(closeRect.x, closeRect.y, closeRect.width, closeRect.height);
+    ctx2.strokeStyle = "rgba(250, 180, 193, 0.85)";
+    ctx2.lineWidth = 1.4;
+    ctx2.strokeRect(closeRect.x, closeRect.y, closeRect.width, closeRect.height);
+    ctx2.fillStyle = "#ffe5ed";
+    ctx2.font = "bold 12px monospace";
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText("Close", closeRect.x + closeRect.width * 0.5, closeRect.y + closeRect.height * 0.5 + 1);
+    ctx2.fillStyle = "#9ec5da";
+    ctx2.font = "11px monospace";
+    ctx2.textAlign = "right";
+    ctx2.textBaseline = "alphabetic";
+    ctx2.fillText(
+      `Acquired: ${acquiredCount}   Seen: ${seenCount}   Not Seen: ${notSeenCount}`,
+      closeRect.x - 16,
+      modalY + 40
+    );
+    const filterRect = {
+      x: modalX + ui.filter.x,
+      y: modalY + ui.filter.y,
+      width: ui.filter.width,
+      height: ui.filter.height
+    };
+    gameState.titlePerkLibraryFilterRect = filterRect;
+    ctx2.fillStyle = "rgba(24, 37, 52, 0.92)";
+    ctx2.fillRect(filterRect.x, filterRect.y, filterRect.width, filterRect.height);
+    ctx2.strokeStyle = "rgba(108, 146, 174, 0.7)";
+    ctx2.lineWidth = 1.4;
+    ctx2.strokeRect(filterRect.x, filterRect.y, filterRect.width, filterRect.height);
+    ctx2.fillStyle = "#cde8f9";
+    ctx2.font = "bold 12px monospace";
+    ctx2.textAlign = "left";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText(`Filter: ${filterTag === "all" ? "All" : filterTag}`, filterRect.x + 10, filterRect.y + filterRect.height * 0.5 + 1);
+    ctx2.textAlign = "right";
+    ctx2.fillText(gameState.titlePerkLibraryFilterDropdownOpen ? "\u25B2" : "\u25BC", filterRect.x + filterRect.width - 10, filterRect.y + filterRect.height * 0.5 + 1);
+    const bulkBtnWidth = 88;
+    const bulkBtnHeight = filterRect.height;
+    const bulkBtnGap = 6;
+    const enableAllRect = {
+      x: filterRect.x + filterRect.width + bulkBtnGap,
+      y: filterRect.y,
+      width: bulkBtnWidth,
+      height: bulkBtnHeight
+    };
+    const disableAllRect = {
+      x: enableAllRect.x + bulkBtnWidth + bulkBtnGap,
+      y: filterRect.y,
+      width: bulkBtnWidth,
+      height: bulkBtnHeight
+    };
+    gameState.titlePerkLibraryEnableAllRect = enableAllRect;
+    gameState.titlePerkLibraryDisableAllRect = disableAllRect;
+    ctx2.fillStyle = "rgba(20, 50, 32, 0.92)";
+    ctx2.fillRect(enableAllRect.x, enableAllRect.y, enableAllRect.width, enableAllRect.height);
+    ctx2.strokeStyle = "rgba(80, 200, 110, 0.72)";
+    ctx2.lineWidth = 1.3;
+    ctx2.strokeRect(enableAllRect.x, enableAllRect.y, enableAllRect.width, enableAllRect.height);
+    ctx2.fillStyle = "#a8ffcc";
+    ctx2.font = "bold 11px monospace";
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText("Enable All", enableAllRect.x + enableAllRect.width * 0.5, enableAllRect.y + enableAllRect.height * 0.5 + 1);
+    ctx2.fillStyle = "rgba(50, 18, 18, 0.92)";
+    ctx2.fillRect(disableAllRect.x, disableAllRect.y, disableAllRect.width, disableAllRect.height);
+    ctx2.strokeStyle = "rgba(200, 70, 70, 0.72)";
+    ctx2.lineWidth = 1.3;
+    ctx2.strokeRect(disableAllRect.x, disableAllRect.y, disableAllRect.width, disableAllRect.height);
+    ctx2.fillStyle = "#ffb0b0";
+    ctx2.font = "bold 11px monospace";
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText("Disable All", disableAllRect.x + disableAllRect.width * 0.5, disableAllRect.y + disableAllRect.height * 0.5 + 1);
+    ctx2.textAlign = "left";
+    ctx2.textBaseline = "alphabetic";
+    gameState.titlePerkLibraryFilterRects = [];
+    const optionHeight = ui.filter.optionHeight;
+    const optionWidth = filterRect.width;
+    const dropdownY = filterRect.y + filterRect.height + 2;
+    const dropdownHeight = filterOptions.length * optionHeight;
+    if (gameState.titlePerkLibraryFilterDropdownOpen) {
+      for (let i = 0; i < filterOptions.length; i += 1) {
+        const option = filterOptions[i];
+        gameState.titlePerkLibraryFilterRects.push({
+          x: filterRect.x,
+          y: dropdownY + i * optionHeight,
+          width: optionWidth,
+          height: optionHeight,
+          filter: option
+        });
+      }
+    }
+    const cardsTop = modalY + ui.cards.topOffset;
+    const cardsBottom = modalY + modalHeight - ui.cards.bottomOffset;
+    const cardGap = ui.cards.gap;
+    const cardHeight = ui.cards.height;
+    const cardStride = cardHeight + cardGap;
+    const contentHeight = filteredPerks.length > 0 ? filteredPerks.length * cardStride - cardGap : 0;
+    const viewHeight = Math.max(0, cardsBottom - cardsTop);
+    const maxScroll = Math.max(0, contentHeight - viewHeight);
+    gameState.titlePerkLibraryScrollMax = maxScroll;
+    gameState.titlePerkLibraryScrollOffset = Math.max(0, Math.min(maxScroll, gameState.titlePerkLibraryScrollOffset || 0));
+    gameState.titlePerkLibraryScrollAreaRect = {
+      x: modalX + 16,
+      y: cardsTop,
+      width: modalWidth - 32,
+      height: viewHeight
+    };
+    gameState.titlePerkLibraryToggleRects = [];
+    ctx2.save();
+    ctx2.beginPath();
+    ctx2.rect(modalX + 16, cardsTop, modalWidth - 32, viewHeight);
+    ctx2.clip();
+    for (let i = 0; i < filteredPerks.length; i += 1) {
+      const perk = filteredPerks[i];
+      const cardY = cardsTop + i * cardStride - gameState.titlePerkLibraryScrollOffset;
+      if (cardY + cardHeight < cardsTop || cardY > cardsBottom) {
+        continue;
+      }
+      const seen = isDebugMode || !!gameState.perkProgress.seen[perk.id];
+      const activated = isDebugMode || !!gameState.perkProgress.activated[perk.id];
+      const perkDisabled = activated && !!gameState.perkProgress.disabled[perk.id];
+      ctx2.fillStyle = perkDisabled ? "rgba(52, 38, 38, 0.9)" : activated ? "rgba(38, 77, 99, 0.9)" : seen ? "rgba(28, 52, 68, 0.9)" : "rgba(44, 44, 50, 0.9)";
+      ctx2.fillRect(modalX + 20, cardY, modalWidth - 40, cardHeight);
+      ctx2.strokeStyle = perkDisabled ? "rgba(180, 100, 100, 0.72)" : activated ? "rgba(145, 231, 255, 0.92)" : seen ? "rgba(112, 178, 204, 0.72)" : "rgba(112, 112, 124, 0.62)";
+      ctx2.lineWidth = 1.5;
+      ctx2.strokeRect(modalX + 20, cardY, modalWidth - 40, cardHeight);
+      if (!seen) {
+        ctx2.fillStyle = "#a2a7b8";
+        ctx2.font = "bold 14px monospace";
+        ctx2.textAlign = "left";
+        ctx2.textBaseline = "alphabetic";
+        ctx2.fillText("????????????????", modalX + 34, cardY + 22);
+        ctx2.fillStyle = "#8f97aa";
+        ctx2.font = "11px monospace";
+        ctx2.fillText(`Tags: ${(perk.tags || []).join(", ")}`, modalX + 34, cardY + 42);
+        continue;
+      }
+      ctx2.fillStyle = "#e8f8ff";
+      ctx2.font = "bold 13px monospace";
+      ctx2.textAlign = "left";
+      ctx2.textBaseline = "alphabetic";
+      ctx2.fillText(perk.name, modalX + 34, cardY + 20);
+      ctx2.fillStyle = "#9dc7ff";
+      ctx2.font = "11px monospace";
+      ctx2.fillText(`Tags: ${(perk.tags || []).join(", ")}`, modalX + 34, cardY + 36);
+      if (activated) {
+        ctx2.fillStyle = "#cde6f3";
+        ctx2.font = "11px monospace";
+        const lines = wrapTextLines2(ctx2, perk.description, modalWidth - 72);
+        if (lines.length > 0) {
+          ctx2.fillText(lines[0], modalX + 34, cardY + 50);
+        }
+        const btnWidth = 80;
+        const btnHeight = 22;
+        const btnX = modalX + modalWidth - 20 - 10 - btnWidth;
+        const btnY = cardY + Math.round((cardHeight - btnHeight) / 2);
+        gameState.titlePerkLibraryToggleRects.push({ x: btnX, y: btnY, width: btnWidth, height: btnHeight, perkId: perk.id });
+        ctx2.fillStyle = perkDisabled ? "rgba(80, 22, 22, 0.92)" : "rgba(22, 68, 38, 0.92)";
+        ctx2.fillRect(btnX, btnY, btnWidth, btnHeight);
+        ctx2.strokeStyle = perkDisabled ? "rgba(220, 80, 80, 0.9)" : "rgba(80, 210, 120, 0.9)";
+        ctx2.lineWidth = 1.3;
+        ctx2.strokeRect(btnX, btnY, btnWidth, btnHeight);
+        ctx2.fillStyle = perkDisabled ? "#ffb0b0" : "#a8ffcc";
+        ctx2.font = "bold 11px monospace";
+        ctx2.textAlign = "center";
+        ctx2.textBaseline = "middle";
+        ctx2.fillText(perkDisabled ? "Disabled" : "Enabled", btnX + btnWidth * 0.5, btnY + btnHeight * 0.5 + 1);
+        ctx2.textAlign = "left";
+        ctx2.textBaseline = "alphabetic";
+      }
+    }
+    ctx2.restore();
+    const scrollTrackX = modalX + modalWidth - ui.scroll.trackRightOffset;
+    const scrollTrackY = cardsTop;
+    const scrollTrackHeight = viewHeight;
+    const scrollTrackWidth = ui.scroll.trackWidth;
+    ctx2.fillStyle = "rgba(19, 34, 49, 0.82)";
+    ctx2.fillRect(scrollTrackX, scrollTrackY, scrollTrackWidth, scrollTrackHeight);
+    if (maxScroll > 0) {
+      const thumbHeight = Math.max(ui.scroll.minThumbHeight, viewHeight / contentHeight * viewHeight);
+      const thumbTravel = scrollTrackHeight - thumbHeight;
+      const thumbY = scrollTrackY + gameState.titlePerkLibraryScrollOffset / maxScroll * thumbTravel;
+      ctx2.fillStyle = "rgba(124, 194, 227, 0.9)";
+      ctx2.fillRect(scrollTrackX, thumbY, scrollTrackWidth, thumbHeight);
+    }
+    ctx2.fillStyle = "#9ec5da";
+    ctx2.font = "11px monospace";
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText("Scroll: wheel or drag", modalX + modalWidth * 0.5, modalY + modalHeight - 20);
+    if (gameState.titlePerkLibraryFilterDropdownOpen) {
+      ctx2.fillStyle = "rgba(11, 22, 35, 0.97)";
+      ctx2.fillRect(filterRect.x, dropdownY, optionWidth, dropdownHeight);
+      ctx2.strokeStyle = "rgba(108, 146, 174, 0.85)";
+      ctx2.lineWidth = 1.2;
+      ctx2.strokeRect(filterRect.x, dropdownY, optionWidth, dropdownHeight);
+      for (let i = 0; i < gameState.titlePerkLibraryFilterRects.length; i += 1) {
+        const optionRect = gameState.titlePerkLibraryFilterRects[i];
+        const option = optionRect.filter;
+        const active = option === filterTag;
+        ctx2.fillStyle = active ? "rgba(48, 92, 120, 0.85)" : "rgba(18, 30, 46, 0.9)";
+        ctx2.fillRect(optionRect.x + 1, optionRect.y + 1, optionRect.width - 2, optionRect.height - 2);
+        ctx2.fillStyle = active ? "#effcff" : "#b8d4e6";
+        ctx2.textAlign = "left";
+        ctx2.textBaseline = "middle";
+        ctx2.font = "12px monospace";
+        ctx2.fillText(option === "all" ? "All" : option, optionRect.x + 10, optionRect.y + optionRect.height * 0.5 + 1);
+      }
+    }
+    ctx2.textAlign = "start";
+    ctx2.textBaseline = "alphabetic";
+  }
+  function renderPauseOverlay(ctx2, canvas2, gameState, renderControlsLegendPanel2, renderPickupLegendPanel2) {
+    const ui = GAME_CONFIG.ui.pause;
+    if (!gameState.paused || gameState.player.perkModalOpen || gameState.gameOver || gameState.titleScreen) {
+      return;
+    }
+    ctx2.fillStyle = "rgba(4, 10, 18, 0.5)";
+    ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+    ctx2.textAlign = "center";
+    ctx2.fillStyle = "#dff8ff";
+    ctx2.font = "bold 46px monospace";
+    ctx2.fillText("PAUSED", canvas2.width * 0.5, 112);
+    ctx2.font = "16px monospace";
+    ctx2.fillStyle = "rgba(212, 233, 255, 0.9)";
+    ctx2.fillText("Press SPACE to resume", canvas2.width * 0.5, 146);
+    renderControlsLegendPanel2(ui.controlsPanelX, canvas2.height - ui.panelBottomOffset, ui.panelWidth);
+    renderPickupLegendPanel2(canvas2.width - ui.pickupPanelRightOffset, canvas2.height - ui.panelBottomOffset, ui.panelWidth);
+    ctx2.textAlign = "start";
+  }
+  function renderTitleScreen(ctx2, canvas2, gameState, renderControlsLegendPanel2, renderTitleHistoryPanel2, drawPerkLibraryOverlay) {
+    const ui = GAME_CONFIG.ui.title;
+    if (!gameState.titleScreen) {
+      return;
+    }
+    ctx2.fillStyle = "rgba(3, 8, 14, 0.78)";
+    ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+    const historyWidth = Math.min(canvas2.width - ui.history.widthMargin, ui.history.widthMax);
+    const historyHeight = ui.history.height;
+    const historyX = canvas2.width * 0.5 - historyWidth * 0.5;
+    const historyY = ui.history.y;
+    const pulse = 0.55 + 0.45 * Math.sin(gameState.time * 2.4);
+    gameState.titleStartRect = {
+      x: canvas2.width * 0.5 - ui.startButton.width * 0.5,
+      y: canvas2.height - ui.startButton.bottomOffset,
+      width: ui.startButton.width,
+      height: ui.startButton.height
+    };
+    gameState.titlePerkLibraryToggleRect = {
+      x: canvas2.width - ui.libraryToggle.rightOffset,
+      y: canvas2.height - ui.libraryToggle.bottomOffset,
+      width: ui.libraryToggle.width,
+      height: ui.libraryToggle.height
+    };
+    ctx2.textAlign = "center";
+    ctx2.fillStyle = "#dff8ff";
+    ctx2.font = "bold 42px monospace";
+    ctx2.fillText("TOP-DOWN SURVIVAL SHOOTER", canvas2.width * 0.5, ui.headingY);
+    ctx2.fillStyle = "rgba(181, 215, 234, 0.92)";
+    ctx2.font = "11px monospace";
+    ctx2.fillText(`v${gameState.appVersion || "0.0"}`, canvas2.width * 0.5, ui.versionY);
+    renderControlsLegendPanel2(ui.controlsPanel.x, canvas2.height - ui.controlsPanel.bottomOffset, ui.controlsPanel.width, "Action");
+    const libraryOpen = !!gameState.titlePerkLibraryOpen;
+    ctx2.fillStyle = libraryOpen ? "rgba(61, 120, 150, 0.95)" : "rgba(28, 52, 68, 0.88)";
+    ctx2.fillRect(
+      gameState.titlePerkLibraryToggleRect.x,
+      gameState.titlePerkLibraryToggleRect.y,
+      gameState.titlePerkLibraryToggleRect.width,
+      gameState.titlePerkLibraryToggleRect.height
+    );
+    ctx2.strokeStyle = libraryOpen ? "rgba(171, 240, 255, 0.95)" : "rgba(122, 186, 216, 0.75)";
+    ctx2.lineWidth = 1.5;
+    ctx2.strokeRect(
+      gameState.titlePerkLibraryToggleRect.x,
+      gameState.titlePerkLibraryToggleRect.y,
+      gameState.titlePerkLibraryToggleRect.width,
+      gameState.titlePerkLibraryToggleRect.height
+    );
+    ctx2.fillStyle = libraryOpen ? "#f2fdff" : "#d2e9f4";
+    ctx2.font = "bold 12px monospace";
+    ctx2.textAlign = "center";
+    ctx2.fillText(
+      libraryOpen ? "Close Library" : "Open Perk Library",
+      gameState.titlePerkLibraryToggleRect.x + gameState.titlePerkLibraryToggleRect.width * 0.5,
+      gameState.titlePerkLibraryToggleRect.y + 18
+    );
+    ctx2.fillStyle = `rgba(33, 67, 84, ${0.82 + pulse * 0.08})`;
+    ctx2.fillRect(gameState.titleStartRect.x, gameState.titleStartRect.y, gameState.titleStartRect.width, gameState.titleStartRect.height);
+    ctx2.strokeStyle = `rgba(255, 226, 166, ${0.75 + pulse * 0.25})`;
+    ctx2.strokeRect(gameState.titleStartRect.x, gameState.titleStartRect.y, gameState.titleStartRect.width, gameState.titleStartRect.height);
+    ctx2.fillStyle = `rgba(255, 238, 194, ${0.7 + pulse * 0.3})`;
+    ctx2.font = "bold 18px monospace";
+    ctx2.fillText("Press SPACE", gameState.titleStartRect.x + gameState.titleStartRect.width * 0.5, gameState.titleStartRect.y + 24);
+    renderTitleHistoryPanel2(historyX, historyY, historyWidth, historyHeight);
+    if (libraryOpen) {
+      drawPerkLibraryOverlay();
+    } else {
+      gameState.titlePerkLibraryModalRect = null;
+      gameState.titlePerkLibraryCloseRect = null;
+      gameState.titlePerkLibraryFilterRect = null;
+      gameState.titlePerkLibraryFilterDropdownOpen = false;
+      gameState.titlePerkLibraryFilterRects = [];
+      gameState.titlePerkLibraryScrollAreaRect = null;
+      gameState.titlePerkLibraryDragging = false;
+      gameState.titlePerkLibraryScrollMax = 0;
+    }
+    ctx2.textAlign = "start";
+  }
+
+  // src/systems/perks/contracts.js
+  var PERK_HOOKS = {
+    onPerkApplied: "onPerkApplied",
+    onWeaponFireRequest: "onWeaponFireRequest",
+    onPerfectWindowCompute: "onPerfectWindowCompute",
+    onPerfectReloadSuccess: "onPerfectReloadSuccess",
+    onProjectileCreate: "onProjectileCreate",
+    onDamageCompute: "onDamageCompute",
+    onMeleeReflectQuery: "onMeleeReflectQuery",
+    onRenderReticleCompute: "onRenderReticleCompute",
+    onPickupMagnetQuery: "onPickupMagnetQuery",
+    onPickupGlobalCooldownCompute: "onPickupGlobalCooldownCompute",
+    onPlayerRuntimeUpdate: "onPlayerRuntimeUpdate",
+    onEnemyHit: "onEnemyHit",
+    onEnemyKilled: "onEnemyKilled",
+    onBlinkDirectionCompute: "onBlinkDirectionCompute",
+    onBlinkEffectsCompute: "onBlinkEffectsCompute",
+    onShoutCreateWave: "onShoutCreateWave",
+    onFireballCreate: "onFireballCreate"
+  };
+
+  // src/systems/worldSystem.js
+  var WORLD_CONFIG = GAME_CONFIG.world;
+  var CHUNK_SIZE = WORLD_CONFIG.chunkSize;
+  var MAX_CHUNK_CACHE = WORLD_CONFIG.maxChunkCache;
+  function hashInt(value) {
+    let x = value | 0;
+    x = Math.imul(x ^ x >>> 16, 73244475);
+    x = Math.imul(x ^ x >>> 16, 73244475);
+    x ^= x >>> 16;
+    return x >>> 0;
+  }
+  function makeRng(seed) {
+    let state = seed >>> 0;
+    return function random() {
+      state += 1831565813;
+      let t = state;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function chunkKey(cx, cy) {
+    return `${cx},${cy}`;
+  }
+  function distanceSq(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return dx * dx + dy * dy;
+  }
+  function createTreeState() {
+    return {
+      burnState: "healthy",
+      burnTimer: 0
+    };
+  }
+  function getTreeState(world, treeId) {
+    let state = world.treeStates.get(treeId);
+    if (!state) {
+      state = createTreeState();
+      world.treeStates.set(treeId, state);
+    }
+    return state;
+  }
+  function generateChunk(world, cx, cy) {
+    const mountainConfig = WORLD_CONFIG.mountains;
+    const treeConfig = WORLD_CONFIG.trees;
+    const mixedSeed = hashInt(world.seed ^ Math.imul(cx + 1013, 374761393) ^ Math.imul(cy + 1619, 668265263));
+    const rng = makeRng(mixedSeed);
+    const baseX = cx * CHUNK_SIZE;
+    const baseY = cy * CHUNK_SIZE;
+    const obstacles = [];
+    const mountains = Math.floor(rng() * mountainConfig.countMaxExclusive);
+    const trees = treeConfig.countBase + Math.floor(rng() * treeConfig.countRange);
+    for (let i = 0; i < mountains; i += 1) {
+      let placed = false;
+      for (let attempt = 0; attempt < mountainConfig.attempts && !placed; attempt += 1) {
+        const radius = mountainConfig.radiusMin + rng() * mountainConfig.radiusRange;
+        const obstacle = {
+          type: "mountain",
+          x: baseX + mountainConfig.edgePadding + rng() * (CHUNK_SIZE - mountainConfig.edgePadding * 2),
+          y: baseY + mountainConfig.edgePadding + rng() * (CHUNK_SIZE - mountainConfig.edgePadding * 2),
+          radius,
+          ridgeRadiusFactor: 0.26 + rng() * 0.24,
+          ridgeOffsetX: (rng() * 2 - 1) * radius * 0.34,
+          ridgeOffsetY: (rng() * 2 - 1) * radius * 0.34
+        };
+        const overlaps = obstacles.some(
+          (entry) => distanceSq(entry, obstacle) < (entry.radius + obstacle.radius + mountainConfig.spacing) ** 2
+        );
+        if (!overlaps) {
+          obstacles.push(obstacle);
+          placed = true;
+        }
+      }
+    }
+    const clusterCount = 1 + Math.floor(rng() * 3);
+    const clusters = [];
+    for (let i = 0; i < clusterCount; i += 1) {
+      clusters.push({
+        x: baseX + treeConfig.edgePadding + rng() * (CHUNK_SIZE - treeConfig.edgePadding * 2),
+        y: baseY + treeConfig.edgePadding + rng() * (CHUNK_SIZE - treeConfig.edgePadding * 2),
+        spread: CHUNK_SIZE * (0.06 + rng() * 0.08)
+      });
+    }
+    for (let i = 0; i < trees; i += 1) {
+      let placed = false;
+      for (let attempt = 0; attempt < treeConfig.attempts && !placed; attempt += 1) {
+        const radius = treeConfig.radiusMin + rng() * treeConfig.radiusRange;
+        const treeId = `tree:${cx}:${cy}:${i}`;
+        const useCluster = rng() < 0.65;
+        const cluster = clusters[Math.floor(rng() * clusters.length)];
+        const rawX = useCluster ? cluster.x + (rng() * 2 - 1) * cluster.spread : baseX + treeConfig.edgePadding + rng() * (CHUNK_SIZE - treeConfig.edgePadding * 2);
+        const rawY = useCluster ? cluster.y + (rng() * 2 - 1) * cluster.spread : baseY + treeConfig.edgePadding + rng() * (CHUNK_SIZE - treeConfig.edgePadding * 2);
+        const obstacle = {
+          type: "tree",
+          x: Math.min(baseX + CHUNK_SIZE - treeConfig.edgePadding, Math.max(baseX + treeConfig.edgePadding, rawX)),
+          y: Math.min(baseY + CHUNK_SIZE - treeConfig.edgePadding, Math.max(baseY + treeConfig.edgePadding, rawY)),
+          radius,
+          treeId,
+          treeState: getTreeState(world, treeId)
+        };
+        const overlaps = obstacles.some((entry) => {
+          if (entry.type !== "mountain") {
+            return false;
+          }
+          return distanceSq(entry, obstacle) < (entry.radius + obstacle.radius + treeConfig.spacing) ** 2;
+        });
+        if (!overlaps) {
+          obstacles.push(obstacle);
+          placed = true;
+        }
+      }
+    }
+    return { cx, cy, obstacles };
+  }
+  function getChunk(world, cx, cy) {
+    const key = chunkKey(cx, cy);
+    if (world.chunkCache.has(key)) {
+      const value = world.chunkCache.get(key);
+      world.chunkCache.delete(key);
+      world.chunkCache.set(key, value);
+      return value;
+    }
+    const chunk = generateChunk(world, cx, cy);
+    world.chunkCache.set(key, chunk);
+    while (world.chunkCache.size > world.maxCachedChunks) {
+      const oldestKey = world.chunkCache.keys().next().value;
+      world.chunkCache.delete(oldestKey);
+    }
+    return chunk;
+  }
+  function getChunksInBounds(world, minX, minY, maxX, maxY) {
+    const minCx = Math.floor(minX / CHUNK_SIZE);
+    const maxCx = Math.floor(maxX / CHUNK_SIZE);
+    const minCy = Math.floor(minY / CHUNK_SIZE);
+    const maxCy = Math.floor(maxY / CHUNK_SIZE);
+    const chunks = [];
+    for (let cy = minCy; cy <= maxCy; cy += 1) {
+      for (let cx = minCx; cx <= maxCx; cx += 1) {
+        chunks.push(getChunk(world, cx, cy));
+      }
+    }
+    return chunks;
+  }
+  function getNearbyObstacles(world, x, y, radius) {
+    const padding = radius + WORLD_CONFIG.obstaclePadding;
+    const chunks = getChunksInBounds(world, x - padding, y - padding, x + padding, y + padding);
+    const result = [];
+    for (let i = 0; i < chunks.length; i += 1) {
+      const obstacles = chunks[i].obstacles;
+      for (let j = 0; j < obstacles.length; j += 1) {
+        result.push(obstacles[j]);
+      }
+    }
+    return result;
+  }
+  function createWorldSystem(seed) {
+    return {
+      seed,
+      chunkCache: /* @__PURE__ */ new Map(),
+      maxCachedChunks: MAX_CHUNK_CACHE,
+      treeStates: /* @__PURE__ */ new Map()
+    };
+  }
+  function getVisibleObstacles(world, centerX, centerY, width, height, padding = WORLD_CONFIG.visiblePadding) {
+    const resolvedPadding = padding;
+    const minX = centerX - width * 0.5 - resolvedPadding;
+    const maxX = centerX + width * 0.5 + resolvedPadding;
+    const minY = centerY - height * 0.5 - resolvedPadding;
+    const maxY = centerY + height * 0.5 + resolvedPadding;
+    const chunks = getChunksInBounds(world, minX, minY, maxX, maxY);
+    const result = [];
+    for (let i = 0; i < chunks.length; i += 1) {
+      const obstacles = chunks[i].obstacles;
+      for (let j = 0; j < obstacles.length; j += 1) {
+        const obstacle = obstacles[j];
+        if (obstacle.x + obstacle.radius < minX || obstacle.x - obstacle.radius > maxX) {
+          continue;
+        }
+        if (obstacle.y + obstacle.radius < minY || obstacle.y - obstacle.radius > maxY) {
+          continue;
+        }
+        result.push(obstacle);
+      }
+    }
+    return result;
+  }
+  function getMovementSlowMultiplier(world, x, y, radius) {
+    if (!world) {
+      return 1;
+    }
+    const nearby = getNearbyObstacles(world, x, y, radius);
+    let slow = 1;
+    for (let i = 0; i < nearby.length; i += 1) {
+      const obstacle = nearby[i];
+      if (obstacle.type !== "tree") {
+        continue;
+      }
+      if (obstacle.treeState?.burnState === "burned") {
+        continue;
+      }
+      const distance = Math.hypot(obstacle.x - x, obstacle.y - y);
+      if (distance <= obstacle.radius + radius) {
+        slow = Math.min(slow, WORLD_CONFIG.trees.slowMultiplier);
+      }
+    }
+    return slow;
+  }
+  function igniteTreesAt(world, x, y, radius) {
+    if (!world) {
+      return;
+    }
+    const nearby = getNearbyObstacles(world, x, y, radius);
+    for (let i = 0; i < nearby.length; i += 1) {
+      const obstacle = nearby[i];
+      if (obstacle.type !== "tree") {
+        continue;
+      }
+      if (obstacle.treeState?.burnState === "burned") {
+        continue;
+      }
+      const distance = Math.hypot(obstacle.x - x, obstacle.y - y);
+      if (distance > obstacle.radius + radius) {
+        continue;
+      }
+      obstacle.treeState.burnState = "burning";
+      obstacle.treeState.burnTimer = Math.max(obstacle.treeState.burnTimer, WORLD_CONFIG.trees.burnDuration);
+    }
+  }
+  function resolvePositionAgainstMountains(world, x, y, radius) {
+    if (!world) {
+      return { x, y, blocked: false };
+    }
+    let resolvedX = x;
+    let resolvedY = y;
+    let blocked = false;
+    const nearby = getNearbyObstacles(world, x, y, radius);
+    for (let i = 0; i < nearby.length; i += 1) {
+      const obstacle = nearby[i];
+      if (obstacle.type !== "mountain") {
+        continue;
+      }
+      const dx = resolvedX - obstacle.x;
+      const dy = resolvedY - obstacle.y;
+      const distance = Math.hypot(dx, dy);
+      const minDistance = obstacle.radius + radius;
+      if (distance < minDistance) {
+        blocked = true;
+        const nx = distance < 1e-4 ? 1 : dx / distance;
+        const ny = distance < 1e-4 ? 0 : dy / distance;
+        resolvedX = obstacle.x + nx * minDistance;
+        resolvedY = obstacle.y + ny * minDistance;
+      }
+    }
+    return { x: resolvedX, y: resolvedY, blocked };
+  }
+  function isProjectileBlockedByMountain(world, x, y, radius) {
+    if (!world) {
+      return false;
+    }
+    const nearby = getNearbyObstacles(world, x, y, radius);
+    for (let i = 0; i < nearby.length; i += 1) {
+      const obstacle = nearby[i];
+      if (obstacle.type !== "mountain") {
+        continue;
+      }
+      const distance = Math.hypot(obstacle.x - x, obstacle.y - y);
+      if (distance <= obstacle.radius + radius) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function getMountainCollisionNormal(world, x, y, radius) {
+    if (!world) {
+      return null;
+    }
+    const nearby = getNearbyObstacles(world, x, y, radius);
+    for (let i = 0; i < nearby.length; i += 1) {
+      const obstacle = nearby[i];
+      if (obstacle.type !== "mountain") {
+        continue;
+      }
+      const dx = x - obstacle.x;
+      const dy = y - obstacle.y;
+      const distance = Math.hypot(dx, dy);
+      const minDistance = obstacle.radius + radius;
+      if (distance <= minDistance) {
+        const nx = distance < 1e-4 ? 1 : dx / distance;
+        const ny = distance < 1e-4 ? 0 : dy / distance;
+        return {
+          nx,
+          ny,
+          x: obstacle.x + nx * minDistance,
+          y: obstacle.y + ny * minDistance
+        };
+      }
+    }
+    return null;
+  }
+
+  // src/core/renderer.js
+  var IS_DEBUG_MODE = new URLSearchParams(window.location.search).get("debug") === "1";
+  function drawBar(ctx2, x, y, width, height, value, max, fill, background = "rgba(255,255,255,0.12)") {
+    ctx2.fillStyle = background;
+    ctx2.fillRect(x, y, width, height);
+    const ratio = max <= 0 ? 0 : Math.max(0, Math.min(1, value / max));
+    ctx2.fillStyle = fill;
+    ctx2.fillRect(x, y, width * ratio, height);
+  }
+  function normalizeRgbColor(color, fallback = "255,255,255") {
+    if (!color) {
+      return fallback;
+    }
+    if (color.includes(",")) {
+      return color;
+    }
+    if (color.startsWith("#") && color.length === 7) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) {
+        return `${r},${g},${b}`;
+      }
+    }
+    return fallback;
+  }
+  function wrapTextLines(ctx2, text, maxWidth) {
+    const words = String(text || "").split(/\s+/).filter(Boolean);
+    const lines = [];
+    let current = "";
+    for (let i = 0; i < words.length; i += 1) {
+      const candidate = current ? `${current} ${words[i]}` : words[i];
+      if (!current || ctx2.measureText(candidate).width <= maxWidth) {
+        current = candidate;
+        continue;
+      }
+      lines.push(current);
+      current = words[i];
+    }
+    if (current) {
+      lines.push(current);
+    }
+    return lines;
+  }
+  function perkTagEmoji(tag) {
+    const map = {
+      blink: "\u{1F4A8}",
+      shout: "\u{1F5E3}\uFE0F",
+      fireball: "\u{1F525}",
+      fire: "\u{1F692}",
+      ice: "\u2744\uFE0F",
+      gun: "\u{1F52B}",
+      bow: "\u{1F3F9}",
+      melee: "\u2694\uFE0F",
+      flail: "\u26D3\uFE0F",
+      utility: "\u{1F9F2}"
+    };
+    return map[tag] || "\u2726";
+  }
+  function drawBorderProgress(ctx2, x, y, width, height, progress, color, lineWidth = 2.5) {
+    const p = Math.max(0, Math.min(1, progress));
+    if (p <= 0) {
+      return;
+    }
+    const perimeter = width * 2 + height * 2;
+    let remaining = perimeter * p;
+    ctx2.strokeStyle = color;
+    ctx2.lineWidth = lineWidth;
+    ctx2.beginPath();
+    const segments = [
+      { from: [x, y], to: [x + width, y], len: width },
+      { from: [x + width, y], to: [x + width, y + height], len: height },
+      { from: [x + width, y + height], to: [x, y + height], len: width },
+      { from: [x, y + height], to: [x, y], len: height }
+    ];
+    for (let i = 0; i < segments.length && remaining > 0; i += 1) {
+      const segment = segments[i];
+      const take = Math.min(segment.len, remaining);
+      const ratio = segment.len <= 0 ? 0 : take / segment.len;
+      const ex = segment.from[0] + (segment.to[0] - segment.from[0]) * ratio;
+      const ey = segment.from[1] + (segment.to[1] - segment.from[1]) * ratio;
+      ctx2.moveTo(segment.from[0], segment.from[1]);
+      ctx2.lineTo(ex, ey);
+      remaining -= take;
+    }
+    ctx2.stroke();
+  }
+  function createRenderer(canvas2, gameState) {
+    const ctx2 = canvas2.getContext("2d");
+    const GAME_OVER_ANIMATION_TIME = 1.1;
+    function getCameraOffset() {
+      return {
+        x: gameState.player.x - canvas2.width * 0.5,
+        y: gameState.player.y - canvas2.height * 0.5
+      };
+    }
+    function renderBackground() {
+      const camera = getCameraOffset();
+      ctx2.fillStyle = CANVAS.background;
+      ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+      ctx2.strokeStyle = "rgba(255,255,255,0.05)";
+      const gridSize = 40;
+      const offsetX = (-camera.x % gridSize + gridSize) % gridSize;
+      const offsetY = (-camera.y % gridSize + gridSize) % gridSize;
+      for (let x = offsetX; x < canvas2.width; x += gridSize) {
+        ctx2.beginPath();
+        ctx2.moveTo(x, 0);
+        ctx2.lineTo(x, canvas2.height);
+        ctx2.stroke();
+      }
+      for (let y = offsetY; y < canvas2.height; y += gridSize) {
+        ctx2.beginPath();
+        ctx2.moveTo(0, y);
+        ctx2.lineTo(canvas2.width, y);
+        ctx2.stroke();
+      }
+    }
+    function renderIndicators() {
+      gameState.indicators.forEach((indicator) => {
+        const progress = Math.max(0, Math.min(1, indicator.elapsed / indicator.duration));
+        if (indicator.type === "circle") {
+          ctx2.strokeStyle = "rgba(255, 70, 70, 0.7)";
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(indicator.position.x, indicator.position.y, indicator.size.radius, 0, Math.PI * 2);
+          ctx2.stroke();
+          ctx2.fillStyle = "rgba(255, 70, 70, 0.25)";
+          ctx2.beginPath();
+          ctx2.moveTo(indicator.position.x, indicator.position.y);
+          ctx2.arc(
+            indicator.position.x,
+            indicator.position.y,
+            indicator.size.radius,
+            -Math.PI * 0.5,
+            -Math.PI * 0.5 + progress * Math.PI * 2
+          );
+          ctx2.closePath();
+          ctx2.fill();
+        }
+      });
+    }
+    function renderDrops() {
+      gameState.drops.forEach((drop) => {
+        const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 7 + drop.position.x * 0.03);
+        ctx2.fillStyle = drop.color || "rgba(56, 212, 122, 0.9)";
+        ctx2.beginPath();
+        ctx2.arc(drop.position.x, drop.position.y, drop.radius + 2 + pulse * 1.2, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.font = "15px monospace";
+        ctx2.textAlign = "center";
+        ctx2.textBaseline = "middle";
+        ctx2.fillStyle = "rgba(255,255,255,0.98)";
+        ctx2.fillText(drop.icon || "\u2728", drop.position.x, drop.position.y + 1);
+        ctx2.textAlign = "start";
+        ctx2.textBaseline = "alphabetic";
+      });
+    }
+    function renderNukeWaves() {
+      gameState.nukeWaves.forEach((wave) => {
+        const progress = wave.maxRadius <= 0 ? 1 : Math.max(0, Math.min(1, wave.radius / wave.maxRadius));
+        const alpha = 0.34 * (1 - progress * 0.55);
+        ctx2.strokeStyle = `rgba(255, 206, 128, ${alpha})`;
+        ctx2.lineWidth = wave.lineWidth || 18;
+        ctx2.beginPath();
+        ctx2.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.strokeStyle = `rgba(255, 246, 198, ${alpha * 0.85})`;
+        ctx2.lineWidth = 3;
+        ctx2.beginPath();
+        ctx2.arc(wave.x, wave.y, Math.max(0, wave.radius - (wave.lineWidth || 18) * 0.35), 0, Math.PI * 2);
+        ctx2.stroke();
+      });
+    }
+    function drawPickupLegendPanel(x, y, width) {
+      renderPickupLegendPanel(ctx2, x, y, width, wrapTextLines);
+    }
+    function drawControlsLegendPanel(x, y, width, title = "Controls") {
+      renderControlsLegendPanel(ctx2, x, y, width, wrapTextLines, title);
+    }
+    function drawTitleHistoryPanel(x, y, width, height) {
+      renderTitleHistoryPanel(ctx2, gameState, x, y, width, height);
+    }
+    function drawPerkLibraryOverlay() {
+      renderPerkLibraryOverlay(ctx2, canvas2, gameState, wrapTextLines, IS_DEBUG_MODE);
+    }
+    function drawPauseOverlay() {
+      renderPauseOverlay(ctx2, canvas2, gameState, drawControlsLegendPanel, drawPickupLegendPanel);
+    }
+    function drawTitleScreen() {
+      renderTitleScreen(ctx2, canvas2, gameState, drawControlsLegendPanel, drawTitleHistoryPanel, drawPerkLibraryOverlay);
+    }
+    function renderWorldObstacles() {
+      const world = gameState.systems.world;
+      if (!world) {
+        return;
+      }
+      const obstacles = getVisibleObstacles(world, gameState.player.x, gameState.player.y, canvas2.width, canvas2.height, 120);
+      for (let index = 0; index < obstacles.length; index += 1) {
+        const obstacle = obstacles[index];
+        if (obstacle.type === "mountain") {
+          const ridge = obstacle.radius * (obstacle.ridgeRadiusFactor || 0.42);
+          ctx2.fillStyle = "rgba(68, 78, 92, 0.92)";
+          ctx2.beginPath();
+          ctx2.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+          ctx2.fill();
+          ctx2.fillStyle = "rgba(106, 121, 138, 0.55)";
+          ctx2.beginPath();
+          ctx2.arc(
+            obstacle.x + (obstacle.ridgeOffsetX || -obstacle.radius * 0.2),
+            obstacle.y + (obstacle.ridgeOffsetY || -obstacle.radius * 0.24),
+            ridge,
+            0,
+            Math.PI * 2
+          );
+          ctx2.fill();
+          ctx2.strokeStyle = "rgba(172, 184, 199, 0.26)";
+          ctx2.lineWidth = 1.5;
+          ctx2.beginPath();
+          ctx2.arc(obstacle.x, obstacle.y, obstacle.radius + 2, 0, Math.PI * 2);
+          ctx2.stroke();
+        } else if (obstacle.type === "tree") {
+          const treeState = obstacle.treeState?.burnState || "healthy";
+          if (treeState === "burned") {
+            ctx2.fillStyle = "rgba(34, 34, 34, 0.88)";
+            ctx2.beginPath();
+            ctx2.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+            ctx2.fill();
+            ctx2.strokeStyle = "rgba(96, 96, 96, 0.42)";
+            ctx2.lineWidth = 1;
+            ctx2.beginPath();
+            ctx2.arc(obstacle.x, obstacle.y, obstacle.radius + 1, 0, Math.PI * 2);
+            ctx2.stroke();
+          } else {
+            ctx2.fillStyle = treeState === "burning" ? "rgba(96, 82, 44, 0.84)" : "rgba(35, 120, 72, 0.72)";
+            ctx2.beginPath();
+            ctx2.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+            ctx2.fill();
+            if (treeState === "burning") {
+              const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 14 + obstacle.x * 0.03);
+              ctx2.fillStyle = `rgba(255, 132, 68, ${0.22 + pulse * 0.24})`;
+              ctx2.beginPath();
+              ctx2.arc(obstacle.x, obstacle.y, obstacle.radius + 4 + pulse * 2, 0, Math.PI * 2);
+              ctx2.fill();
+              ctx2.strokeStyle = `rgba(255, 222, 146, ${0.4 + pulse * 0.3})`;
+              ctx2.lineWidth = 1.5;
+              ctx2.beginPath();
+              ctx2.arc(obstacle.x, obstacle.y, Math.max(4, obstacle.radius - 2), 0, Math.PI * 2);
+              ctx2.stroke();
+            } else {
+              ctx2.strokeStyle = "rgba(112, 208, 140, 0.45)";
+              ctx2.lineWidth = 1;
+              ctx2.beginPath();
+              ctx2.arc(obstacle.x, obstacle.y, obstacle.radius + 1, 0, Math.PI * 2);
+              ctx2.stroke();
+            }
+          }
+        }
+      }
+    }
+    function renderEntities() {
+      const player = gameState.player;
+      if (player.blinkPreview?.active) {
+        const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 10);
+        ctx2.strokeStyle = `rgba(126, 230, 255, ${0.45 + pulse * 0.45})`;
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(player.blinkPreview.x, player.blinkPreview.y, player.radius + 4, 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.setLineDash([6, 6]);
+        ctx2.strokeStyle = "rgba(126, 230, 255, 0.45)";
+        ctx2.beginPath();
+        ctx2.moveTo(player.x, player.y);
+        ctx2.lineTo(player.blinkPreview.x, player.blinkPreview.y);
+        ctx2.stroke();
+        ctx2.setLineDash([]);
+      }
+      if (player.shoutPreview?.active) {
+        const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 9);
+        ctx2.strokeStyle = `rgba(156, 255, 244, ${0.3 + pulse * 0.35})`;
+        ctx2.lineWidth = 3;
+        ctx2.beginPath();
+        ctx2.arc(player.x, player.y, player.shoutRadius, 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.setLineDash([8, 8]);
+        ctx2.strokeStyle = `rgba(196, 255, 248, ${0.22 + pulse * 0.24})`;
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(player.x, player.y, Math.max(0, player.shoutRadius - 10), 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.setLineDash([]);
+      }
+      ctx2.fillStyle = "#6ec6ff";
+      ctx2.beginPath();
+      ctx2.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx2.fill();
+      const weapon = gameState.systems.weaponSystem;
+      if (weapon && weapon.isFlailSelected && weapon.isFlailSelected() && typeof weapon.getFlailSnapshot === "function") {
+        const flail = weapon.getFlailSnapshot(player);
+        if (flail) {
+          const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 16);
+          for (let i = 0; i < flail.trail.length; i += 1) {
+            const trailNode = flail.trail[i];
+            const lifeRatio = Math.max(0, Math.min(1, trailNode.life / 0.24));
+            ctx2.fillStyle = `rgba(170, 238, 255, ${0.18 * lifeRatio})`;
+            ctx2.beginPath();
+            ctx2.arc(trailNode.x, trailNode.y, Math.max(2, flail.radius * 0.45 * lifeRatio), 0, Math.PI * 2);
+            ctx2.fill();
+          }
+          ctx2.strokeStyle = `rgba(180, 230, 255, ${0.5 + pulse * 0.2})`;
+          ctx2.lineWidth = Math.max(2, flail.chainVisualWidth);
+          ctx2.beginPath();
+          ctx2.moveTo(flail.chainPoints[0].x, flail.chainPoints[0].y);
+          for (let i = 1; i < flail.chainPoints.length; i += 1) {
+            ctx2.lineTo(flail.chainPoints[i].x, flail.chainPoints[i].y);
+          }
+          ctx2.stroke();
+          ctx2.strokeStyle = "rgba(255,255,255,0.32)";
+          ctx2.lineWidth = 1;
+          for (let i = 0; i < flail.chainPoints.length - 1; i += 1) {
+            const from = flail.chainPoints[i];
+            const to = flail.chainPoints[i + 1];
+            const t = i / Math.max(1, flail.chainPoints.length - 2);
+            const glint = 0.5 + 0.5 * Math.sin(gameState.time * 8 - t * 8);
+            ctx2.globalAlpha = 0.22 + glint * 0.2;
+            ctx2.beginPath();
+            ctx2.moveTo(from.x, from.y);
+            ctx2.lineTo(to.x, to.y);
+            ctx2.stroke();
+          }
+          ctx2.globalAlpha = 1;
+          ctx2.fillStyle = `rgba(255, 210, 126, ${0.24 + flail.impactPulse * 0.35})`;
+          ctx2.beginPath();
+          ctx2.arc(flail.x, flail.y, flail.radius + 8 + flail.impactPulse * 6, 0, Math.PI * 2);
+          ctx2.fill();
+          ctx2.fillStyle = "#f2ca88";
+          ctx2.beginPath();
+          ctx2.arc(flail.x, flail.y, flail.radius, 0, Math.PI * 2);
+          ctx2.fill();
+          ctx2.strokeStyle = "rgba(255, 239, 198, 0.88)";
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(flail.x, flail.y, flail.radius + 1.5, 0, Math.PI * 2);
+          ctx2.stroke();
+        }
+      }
+      if (Array.isArray(player.activeDurationBars) && player.activeDurationBars.length > 0) {
+        const barWidth = 54;
+        const barHeight = 5;
+        const barGap = 3;
+        const startY = player.y + player.radius + 8;
+        for (let i = 0; i < player.activeDurationBars.length; i += 1) {
+          const bar = player.activeDurationBars[i];
+          const ratio = bar.duration <= 0 ? 0 : Math.max(0, Math.min(1, bar.remaining / bar.duration));
+          const x = player.x - barWidth * 0.5;
+          const y = startY + i * (barHeight + barGap);
+          ctx2.fillStyle = "rgba(20, 20, 20, 0.68)";
+          ctx2.fillRect(x, y, barWidth, barHeight);
+          ctx2.fillStyle = bar.color || "rgba(255, 255, 255, 0.9)";
+          ctx2.fillRect(x, y, barWidth * ratio, barHeight);
+          ctx2.strokeStyle = "rgba(255, 255, 255, 0.24)";
+          ctx2.lineWidth = 1;
+          ctx2.strokeRect(x, y, barWidth, barHeight);
+        }
+      }
+      function renderFlyingBomber(enemy) {
+        if (enemy.flyPhase === "warning") {
+          const fromX = enemy.flyFromX;
+          const fromY = enemy.flyFromY;
+          const exitX = enemy.flyExitX;
+          const exitY = enemy.flyExitY;
+          const warningProgress = 1 - Math.max(0, enemy.warningTimer / (enemy.warningDuration || 1.9));
+          const dx = exitX - fromX;
+          const dy = exitY - fromY;
+          const pathLen = Math.hypot(dx, dy) || 1;
+          const dirX = dx / pathLen;
+          const dirY = dy / pathLen;
+          const perpX = -dirY;
+          const perpY = dirX;
+          ctx2.save();
+          ctx2.globalAlpha = 0.28 + warningProgress * 0.14;
+          ctx2.strokeStyle = "#ff3355";
+          ctx2.lineWidth = 2;
+          ctx2.setLineDash([12, 9]);
+          ctx2.beginPath();
+          ctx2.moveTo(fromX, fromY);
+          ctx2.lineTo(exitX, exitY);
+          ctx2.stroke();
+          ctx2.setLineDash([]);
+          ctx2.restore();
+          const arrowSpacing = 160;
+          const scrollSpeed = 220;
+          const animOffset = gameState.time * scrollSpeed % arrowSpacing;
+          const arrowCount = Math.ceil(pathLen / arrowSpacing) + 2;
+          for (let i = 0; i < arrowCount; i += 1) {
+            const dist = animOffset + i * arrowSpacing;
+            if (dist > pathLen) {
+              break;
+            }
+            const ax = fromX + dirX * dist;
+            const ay = fromY + dirY * dist;
+            const arrowSize = 13;
+            ctx2.save();
+            ctx2.globalAlpha = (0.55 + 0.4 * Math.sin(gameState.time * 10 - i * 1.2)) * (0.5 + warningProgress * 0.5);
+            ctx2.fillStyle = "rgba(255, 50, 80, 0.82)";
+            ctx2.strokeStyle = "#ff4466";
+            ctx2.lineWidth = 1.6;
+            ctx2.beginPath();
+            ctx2.moveTo(ax + dirX * arrowSize, ay + dirY * arrowSize);
+            ctx2.lineTo(ax - dirX * arrowSize + perpX * arrowSize * 0.65, ay - dirY * arrowSize + perpY * arrowSize * 0.65);
+            ctx2.lineTo(ax - dirX * arrowSize * 0.35, ay - dirY * arrowSize * 0.35);
+            ctx2.lineTo(ax - dirX * arrowSize - perpX * arrowSize * 0.65, ay - dirY * arrowSize - perpY * arrowSize * 0.65);
+            ctx2.closePath();
+            ctx2.fill();
+            ctx2.stroke();
+            ctx2.restore();
+          }
+          const pulse = 0.4 + 0.6 * Math.sin(gameState.time * 9);
+          ctx2.strokeStyle = `rgba(255, 60, 90, ${0.4 + pulse * 0.55})`;
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(enemy.x, enemy.y, enemy.radius + 4 + pulse * 3, 0, Math.PI * 2);
+          ctx2.stroke();
+        }
+        ctx2.fillStyle = enemy.color;
+        ctx2.beginPath();
+        ctx2.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+        ctx2.fill();
+        if (enemy.flyPhase === "flying") {
+          const trailLen = 26;
+          const tx = -enemy.flyDirX * trailLen;
+          const ty = -enemy.flyDirY * trailLen;
+          const perpX = -enemy.flyDirY;
+          const perpY = enemy.flyDirX;
+          const wingSpan = enemy.radius * 1.4;
+          ctx2.save();
+          ctx2.globalAlpha = 0.65;
+          ctx2.fillStyle = "#ff8899";
+          ctx2.beginPath();
+          ctx2.moveTo(enemy.x, enemy.y);
+          ctx2.lineTo(enemy.x + perpX * wingSpan + tx * 0.6, enemy.y + perpY * wingSpan + ty * 0.6);
+          ctx2.lineTo(enemy.x + tx, enemy.y + ty);
+          ctx2.closePath();
+          ctx2.fill();
+          ctx2.beginPath();
+          ctx2.moveTo(enemy.x, enemy.y);
+          ctx2.lineTo(enemy.x - perpX * wingSpan + tx * 0.6, enemy.y - perpY * wingSpan + ty * 0.6);
+          ctx2.lineTo(enemy.x + tx, enemy.y + ty);
+          ctx2.closePath();
+          ctx2.fill();
+          ctx2.restore();
+        }
+        if (enemy.maxHp > 0 && enemy.hp > 0 && enemy.hp < enemy.maxHp) {
+          const barWidth = Math.max(22, enemy.radius * 2.2);
+          const barX = enemy.x - barWidth * 0.5;
+          const barY = enemy.y - enemy.radius - 10;
+          drawBar(ctx2, barX, barY, barWidth, 4, enemy.hp, enemy.maxHp, "#ff8899", "rgba(0,0,0,0.45)");
+        }
+      }
+      gameState.enemies.forEach((enemy) => {
+        if (enemy.isRespawning) {
+          return;
+        }
+        if (enemy.type === "bomber") {
+          const pulse = 0.45 + 0.55 * Math.sin(gameState.time * 8 + enemy.x * 0.01);
+          const radius = enemy.explosionRadius || 78;
+          ctx2.strokeStyle = `rgba(255, 116, 144, ${0.24 + pulse * 0.28})`;
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(enemy.x, enemy.y, radius, 0, Math.PI * 2);
+          ctx2.stroke();
+        }
+        if (enemy.type === "flyingBomber") {
+          renderFlyingBomber(enemy);
+          return;
+        }
+        ctx2.fillStyle = enemy.color;
+        ctx2.beginPath();
+        ctx2.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+        ctx2.fill();
+        if ((enemy.stunnedTimer || 0) > 0) {
+          const pulse = 0.45 + 0.55 * Math.sin(gameState.time * 12 + enemy.x * 0.02);
+          const markerY = enemy.y - enemy.radius - 18;
+          ctx2.strokeStyle = `rgba(176, 244, 255, ${0.5 + pulse * 0.45})`;
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(enemy.x, markerY, 8, 0, Math.PI * 2);
+          ctx2.stroke();
+          ctx2.fillStyle = `rgba(214, 250, 255, ${0.75 + pulse * 0.2})`;
+          ctx2.font = "bold 13px monospace";
+          ctx2.textAlign = "center";
+          ctx2.fillText("STUN", enemy.x, markerY + 4);
+          ctx2.textAlign = "start";
+        }
+        if (enemy.maxHp > 0 && enemy.hp > 0 && enemy.hp < enemy.maxHp) {
+          const barWidth = Math.max(22, enemy.radius * 2.2);
+          const barHeight = 4;
+          const barX = enemy.x - barWidth * 0.5;
+          const barY = enemy.y - enemy.radius - 10;
+          drawBar(ctx2, barX, barY, barWidth, barHeight, enemy.hp, enemy.maxHp, "#79e57e", "rgba(0,0,0,0.45)");
+        }
+      });
+    }
+    function renderPlayerReloadIndicator() {
+      const player = gameState.player;
+      const weapon = gameState.systems.weaponSystem;
+      if (!weapon) {
+        return;
+      }
+      const showChargeBar = weapon.isBowSelected && weapon.isBowSelected() && weapon.shouldShowChargeBar();
+      const showBowReloadBar = weapon.isBowSelected && weapon.isBowSelected() && !showChargeBar && weapon.isBowReloading && weapon.isBowReloading();
+      const showAmmoBar = weapon.isGunSelected && weapon.isGunSelected() && !weapon.isReloading && weapon.shouldShowAmmoBar();
+      const showReloadBar = weapon.isGunSelected && weapon.isGunSelected() && (weapon.isReloading || weapon.currentAmmo <= 0);
+      if (!showReloadBar && !showAmmoBar && !showChargeBar && !showBowReloadBar) {
+        return;
+      }
+      const width = 96;
+      const height = 10;
+      const feedback = typeof weapon.getReloadFeedback === "function" ? weapon.getReloadFeedback() : null;
+      const failedReload = typeof weapon.hasFailedReload === "function" ? weapon.hasFailedReload() : false;
+      const feedbackStrength = feedback ? Math.max(0, Math.min(1, feedback.strength)) : 0;
+      const shake = feedback?.type === "miss" ? Math.sin(gameState.time * 90) * 2.5 * feedbackStrength : 0;
+      const x = player.x - width * 0.5 + shake;
+      const y = player.y - player.radius - 28;
+      if (showReloadBar) {
+        const reloadRatio = Math.max(0, Math.min(1, weapon.getReloadProgress()));
+        const [start, end] = typeof weapon.getPerfectReloadWindow === "function" ? weapon.getPerfectReloadWindow(player) : weapon.perfectWindow;
+        const progressColor = failedReload ? "#ff4d67" : "#ff8a65";
+        const windowColor = failedReload ? "rgba(255, 120, 140, 0.22)" : "rgba(119, 255, 177, 0.35)";
+        const markerColor = failedReload ? "#ffd6dc" : "rgba(255, 222, 138, 0.95)";
+        const magazineSize = Math.max(1, weapon.getMagazineSize(player));
+        ctx2.fillStyle = "rgba(255,255,255,0.18)";
+        ctx2.fillRect(x, y, width, height);
+        ctx2.fillStyle = windowColor;
+        ctx2.fillRect(x + width * start, y, width * (end - start), height);
+        ctx2.fillStyle = progressColor;
+        ctx2.fillRect(x, y, width * reloadRatio, height);
+        const markerX = x + width * reloadRatio;
+        ctx2.strokeStyle = markerColor;
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.moveTo(markerX, y - 2);
+        ctx2.lineTo(markerX, y + height + 2);
+        ctx2.stroke();
+        ctx2.strokeStyle = "rgba(255, 222, 138, 0.8)";
+        ctx2.lineWidth = 1.5;
+        ctx2.strokeRect(x - 1, y - 1, width + 2, height + 2);
+        if (failedReload) {
+          const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 18);
+          ctx2.strokeStyle = `rgba(255, 99, 132, ${0.35 + pulse * 0.55})`;
+          ctx2.lineWidth = 2;
+          ctx2.strokeRect(x - 2, y - 2, width + 4, height + 4);
+        } else if (weapon.isReloading && reloadRatio >= start && reloadRatio <= end) {
+          const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 24);
+          ctx2.strokeStyle = `rgba(119, 255, 177, ${0.4 + pulse * 0.6})`;
+          ctx2.lineWidth = 2;
+          ctx2.strokeRect(x - 2, y - 2, width + 4, height + 4);
+        }
+        if (feedback) {
+          const impactColor = feedback.type === "perfect" ? "109, 255, 181" : "255, 95, 121";
+          const radius = 16 + (1 - feedbackStrength) * 20;
+          ctx2.strokeStyle = `rgba(${impactColor}, ${0.85 * feedbackStrength})`;
+          ctx2.lineWidth = 2 + feedbackStrength;
+          ctx2.beginPath();
+          ctx2.arc(player.x, y + height * 0.5, radius, 0, Math.PI * 2);
+          ctx2.stroke();
+          ctx2.fillStyle = `rgba(${impactColor}, ${0.3 * feedbackStrength})`;
+          ctx2.fillRect(x - 2, y - 2, width + 4, height + 4);
+        }
+      }
+      if (showChargeBar) {
+        const chargeRatio = Math.max(0, Math.min(1, weapon.getBowChargeProgress()));
+        const [start, end] = weapon.getBowChargeWindow(player);
+        const pulse = chargeRatio >= start && chargeRatio <= end ? 0.5 + 0.5 * Math.sin(gameState.time * 26) : 0;
+        ctx2.fillStyle = "rgba(255,255,255,0.18)";
+        ctx2.fillRect(x, y, width, height);
+        ctx2.fillStyle = "rgba(136, 255, 236, 0.34)";
+        ctx2.fillRect(x + width * start, y, width * (end - start), height);
+        ctx2.fillStyle = "#82d8ff";
+        ctx2.fillRect(x, y, width * chargeRatio, height);
+        const markerX = x + width * chargeRatio;
+        ctx2.strokeStyle = "rgba(205, 246, 255, 0.95)";
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.moveTo(markerX, y - 2);
+        ctx2.lineTo(markerX, y + height + 2);
+        ctx2.stroke();
+        ctx2.strokeStyle = "rgba(147, 226, 255, 0.9)";
+        ctx2.lineWidth = 1.5;
+        ctx2.strokeRect(x - 1, y - 1, width + 2, height + 2);
+        if (pulse > 0) {
+          ctx2.strokeStyle = `rgba(133, 255, 214, ${0.42 + pulse * 0.58})`;
+          ctx2.lineWidth = 2;
+          ctx2.strokeRect(x - 2, y - 2, width + 4, height + 4);
+        }
+      }
+      if (showBowReloadBar) {
+        const reloadRatio = Math.max(0, Math.min(1, weapon.getBowReloadProgress()));
+        ctx2.fillStyle = "rgba(255,255,255,0.18)";
+        ctx2.fillRect(x, y, width, height);
+        ctx2.fillStyle = "#ff8a65";
+        ctx2.fillRect(x, y, width * reloadRatio, height);
+        const markerX = x + width * reloadRatio;
+        ctx2.strokeStyle = "rgba(255, 222, 138, 0.95)";
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.moveTo(markerX, y - 2);
+        ctx2.lineTo(markerX, y + height + 2);
+        ctx2.stroke();
+        ctx2.strokeStyle = "rgba(255, 222, 138, 0.8)";
+        ctx2.lineWidth = 1.5;
+        ctx2.strokeRect(x - 1, y - 1, width + 2, height + 2);
+      }
+      if (showAmmoBar) {
+        const magazineSize = Math.max(1, weapon.getMagazineSize(player));
+        const ammoRatio = Math.max(0, Math.min(1, weapon.currentAmmo / magazineSize));
+        ctx2.fillStyle = "rgba(255,255,255,0.18)";
+        ctx2.fillRect(x, y, width, height);
+        ctx2.fillStyle = "#ffd76e";
+        ctx2.fillRect(x, y, width * ammoRatio, height);
+        ctx2.strokeStyle = "rgba(255, 222, 138, 0.8)";
+        ctx2.lineWidth = 1.5;
+        ctx2.strokeRect(x - 1, y - 1, width + 2, height + 2);
+      }
+    }
+    function renderProjectiles() {
+      gameState.projectiles.forEach((projectile) => {
+        ctx2.fillStyle = projectile.color;
+        ctx2.beginPath();
+        ctx2.arc(projectile.position.x, projectile.position.y, projectile.radius, 0, Math.PI * 2);
+        ctx2.fill();
+      });
+    }
+    function renderFireballs() {
+      gameState.fireballs.forEach((fireball) => {
+        const pulse = 0.5 + 0.5 * Math.sin(gameState.time * 16 + fireball.x * 0.01);
+        ctx2.fillStyle = `rgba(255, 122, 72, ${0.72 + pulse * 0.18})`;
+        ctx2.beginPath();
+        ctx2.arc(fireball.x, fireball.y, fireball.radius + 1, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.fillStyle = `rgba(255, 108, 62, ${0.2 + pulse * 0.12})`;
+        ctx2.beginPath();
+        ctx2.arc(fireball.x, fireball.y, fireball.radius + 8 + pulse * 3, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.fillStyle = `rgba(255, 224, 132, ${0.58 + pulse * 0.22})`;
+        ctx2.beginPath();
+        ctx2.arc(fireball.x, fireball.y, fireball.radius * 0.52, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.strokeStyle = `rgba(255, 190, 122, ${0.55 + pulse * 0.25})`;
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(fireball.x, fireball.y, fireball.radius + 2, 0, Math.PI * 2);
+        ctx2.stroke();
+      });
+    }
+    function renderLingeringZones() {
+      gameState.lingeringZones.forEach((zone) => {
+        const lifeRatio = zone.maxLifetime <= 0 ? 0 : Math.max(0, Math.min(1, zone.lifetime / zone.maxLifetime));
+        const alpha = 0.15 + lifeRatio * 0.25;
+        if (zone.type === "fire") {
+          ctx2.fillStyle = `rgba(255, 126, 64, ${alpha})`;
+          ctx2.beginPath();
+          ctx2.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+          ctx2.fill();
+          ctx2.strokeStyle = `rgba(255, 194, 112, ${alpha + 0.1})`;
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(zone.x, zone.y, Math.max(4, zone.radius - 3), 0, Math.PI * 2);
+          ctx2.stroke();
+        } else if (zone.type === "ice") {
+          ctx2.fillStyle = `rgba(92, 204, 255, ${alpha})`;
+          ctx2.beginPath();
+          ctx2.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+          ctx2.fill();
+          ctx2.strokeStyle = `rgba(198, 244, 255, ${alpha + 0.08})`;
+          ctx2.lineWidth = 2;
+          ctx2.beginPath();
+          ctx2.arc(zone.x, zone.y, Math.max(4, zone.radius - 3), 0, Math.PI * 2);
+          ctx2.stroke();
+        }
+      });
+    }
+    function renderSlashEffects() {
+      gameState.slashEffects.forEach((slash) => {
+        const progress = Math.max(0, Math.min(1, slash.elapsed / slash.duration));
+        const alpha = 1 - progress;
+        const startAngle = slash.angle - slash.arc * 0.5;
+        const sweep = slash.arc * (0.45 + progress * 0.55);
+        const endAngle = startAngle + sweep;
+        const radius = slash.range * (0.72 + progress * 0.28);
+        ctx2.strokeStyle = `rgba(${slash.color}, ${0.75 * alpha})`;
+        ctx2.lineWidth = 12 * (1 - progress * 0.45);
+        ctx2.lineCap = "round";
+        ctx2.beginPath();
+        ctx2.arc(slash.x, slash.y, radius, startAngle, endAngle);
+        ctx2.stroke();
+        ctx2.strokeStyle = `rgba(255,255,255, ${0.32 * alpha})`;
+        ctx2.lineWidth = 3;
+        ctx2.beginPath();
+        ctx2.arc(slash.x, slash.y, Math.max(8, radius - 10), startAngle, endAngle);
+        ctx2.stroke();
+        ctx2.lineCap = "butt";
+      });
+    }
+    function renderShoutWaves() {
+      gameState.shoutWaves.forEach((wave) => {
+        const progress = Math.max(0, Math.min(1, wave.elapsed / wave.duration));
+        const radius = wave.maxRadius * progress;
+        const alpha = 1 - progress;
+        ctx2.strokeStyle = `rgba(158, 255, 246, ${0.65 * alpha})`;
+        ctx2.lineWidth = Math.max(2, wave.thickness * (0.35 - progress * 0.2));
+        ctx2.beginPath();
+        ctx2.arc(wave.x, wave.y, radius, 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.strokeStyle = `rgba(225, 255, 252, ${0.35 * alpha})`;
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(wave.x, wave.y, Math.max(0, radius - 8), 0, Math.PI * 2);
+        ctx2.stroke();
+      });
+    }
+    function renderWeaponReticle() {
+      const weapon = gameState.systems.weaponSystem;
+      const perkEngine = gameState.systems.perkEngine;
+      const player = gameState.player;
+      const aim = player.aim;
+      if (!weapon || !aim) {
+        return;
+      }
+      const dx = aim.x - player.x;
+      const dy = aim.y - player.y;
+      const angle = Math.atan2(dy, dx);
+      const aimDistance = Math.hypot(dx, dy);
+      const weaponType = weapon.isGunSelected && weapon.isGunSelected() ? "gun" : weapon.isBowSelected && weapon.isBowSelected() ? "bow" : weapon.isFlailSelected && weapon.isFlailSelected() ? "flail" : "other";
+      const laserContext = {
+        enableLaser: false,
+        weaponType,
+        player,
+        weapon,
+        gameState
+      };
+      const finalizedLaserContext = perkEngine ? perkEngine.runTransformHook(PERK_HOOKS.onRenderReticleCompute, laserContext, player) : laserContext;
+      const laserAllowed = finalizedLaserContext.enableLaser;
+      if (laserAllowed) {
+        const maxLen = 900;
+        const length = Math.min(maxLen, aimDistance);
+        const endX = player.x + Math.cos(angle) * length;
+        const endY = player.y + Math.sin(angle) * length;
+        ctx2.setLineDash([4, 6]);
+        ctx2.strokeStyle = "rgba(255, 110, 110, 0.72)";
+        ctx2.lineWidth = 1.5;
+        ctx2.beginPath();
+        ctx2.moveTo(player.x, player.y);
+        ctx2.lineTo(endX, endY);
+        ctx2.stroke();
+        ctx2.setLineDash([]);
+      }
+      if (weapon.isGunSelected && weapon.isGunSelected()) {
+        const radius = 8;
+        ctx2.strokeStyle = "rgba(255, 215, 122, 0.9)";
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(aim.x, aim.y, radius, 0, Math.PI * 2);
+        ctx2.stroke();
+        ctx2.beginPath();
+        ctx2.moveTo(aim.x - 12, aim.y);
+        ctx2.lineTo(aim.x + 12, aim.y);
+        ctx2.moveTo(aim.x, aim.y - 12);
+        ctx2.lineTo(aim.x, aim.y + 12);
+        ctx2.stroke();
+        return;
+      }
+      if (weapon.isMeleeSelected && weapon.isMeleeSelected()) {
+        const preview = weapon.getMeleePreview ? weapon.getMeleePreview() : null;
+        if (!preview) {
+          return;
+        }
+        const start = angle - preview.arc * 0.5;
+        const end = angle + preview.arc * 0.5;
+        ctx2.strokeStyle = "rgba(132, 255, 236, 0.5)";
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(player.x, player.y, preview.range, start, end);
+        ctx2.stroke();
+        ctx2.strokeStyle = "rgba(126, 255, 220, 0.38)";
+        ctx2.beginPath();
+        ctx2.moveTo(player.x, player.y);
+        ctx2.lineTo(player.x + Math.cos(angle) * preview.range, player.y + Math.sin(angle) * preview.range);
+        ctx2.stroke();
+        return;
+      }
+      if (weapon.isBowSelected && weapon.isBowSelected()) {
+        const charge = weapon.getBowChargeProgress ? weapon.getBowChargeProgress() : 0;
+        const ring = 7 + charge * 9;
+        ctx2.strokeStyle = "rgba(146, 228, 255, 0.9)";
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(aim.x, aim.y, ring, 0, Math.PI * 2);
+        ctx2.stroke();
+        return;
+      }
+      if (weapon.isFlailSelected && weapon.isFlailSelected() && typeof weapon.getFlailSnapshot === "function") {
+        const flail = weapon.getFlailSnapshot(player);
+        if (!flail) {
+          return;
+        }
+        ctx2.strokeStyle = "rgba(238, 255, 176, 0.9)";
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(flail.x, flail.y, Math.max(6, flail.radius + 2), 0, Math.PI * 2);
+        ctx2.stroke();
+      }
+    }
+    function renderFloatingTexts() {
+      gameState.floatingTexts.forEach((entry) => {
+        const progress = Math.max(0, Math.min(1, entry.elapsed / entry.duration));
+        const alpha = 1 - progress;
+        const startScale = 1.16;
+        const endScale = 0.66;
+        const scale = startScale + (endScale - startScale) * progress;
+        const isXp = entry.kind === "xp";
+        const color = normalizeRgbColor(entry.color, isXp ? "149,255,206" : "255,198,150");
+        ctx2.save();
+        ctx2.translate(entry.x, entry.y);
+        ctx2.scale(scale, scale);
+        ctx2.font = `bold ${entry.size || 22}px monospace`;
+        ctx2.textAlign = "center";
+        ctx2.lineJoin = "round";
+        ctx2.lineWidth = isXp ? 4 : 3.5;
+        ctx2.strokeStyle = `rgba(12, 22, 35, ${alpha * 0.95})`;
+        ctx2.strokeText(entry.text, 0, 0);
+        ctx2.fillStyle = `rgba(${color}, ${alpha})`;
+        ctx2.fillText(entry.text, 0, 0);
+        ctx2.restore();
+      });
+    }
+    function renderOffscreenEnemyIndicators() {
+      const camera = getCameraOffset();
+      const centerX = canvas2.width * 0.5;
+      const centerY = canvas2.height * 0.5;
+      const edgePadding = 28;
+      const halfW = centerX - edgePadding;
+      const halfH = centerY - edgePadding;
+      gameState.enemies.forEach((enemy) => {
+        if (enemy.isRespawning) {
+          return;
+        }
+        if (enemy.type === "flyingBomber" && enemy.flyPhase === "warning") {
+          return;
+        }
+        const sx = enemy.x - camera.x;
+        const sy = enemy.y - camera.y;
+        if (sx >= edgePadding && sx <= canvas2.width - edgePadding && sy >= edgePadding && sy <= canvas2.height - edgePadding) {
+          return;
+        }
+        const dx = sx - centerX;
+        const dy = sy - centerY;
+        const inv = 1 / Math.max(Math.abs(dx) / Math.max(1, halfW), Math.abs(dy) / Math.max(1, halfH));
+        const ix = centerX + dx * inv;
+        const iy = centerY + dy * inv;
+        const angle = Math.atan2(dy, dx);
+        const size = enemy.type === "mortar" ? 10 : enemy.type === "bomber" || enemy.type === "flyingBomber" ? 9 : 8;
+        ctx2.save();
+        ctx2.translate(ix, iy);
+        ctx2.rotate(angle);
+        ctx2.fillStyle = enemy.type === "mortar" ? "rgba(255, 178, 122, 0.95)" : enemy.type === "flyingBomber" ? "rgba(255, 34, 68, 0.95)" : enemy.type === "bomber" ? "rgba(255, 106, 138, 0.95)" : "rgba(255, 126, 126, 0.9)";
+        ctx2.beginPath();
+        ctx2.moveTo(size + 3, 0);
+        ctx2.lineTo(-size, -size * 0.7);
+        ctx2.lineTo(-size, size * 0.7);
+        ctx2.closePath();
+        ctx2.fill();
+        ctx2.restore();
+      });
+    }
+    function renderEffects() {
+      gameState.effects.forEach((effect) => {
+        const alpha = 1 - effect.elapsed / effect.duration;
+        const color = effect.color || "255, 220, 120";
+        if (effect.kind === "particle") {
+          const growth2 = effect.growth ?? 0;
+          const radius = Math.max(0.4, effect.radius + effect.elapsed * growth2);
+          ctx2.fillStyle = `rgba(${color}, ${Math.max(0, alpha)})`;
+          ctx2.beginPath();
+          ctx2.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+          ctx2.fill();
+          return;
+        }
+        const growth = effect.growth ?? 18;
+        ctx2.strokeStyle = `rgba(${color}, ${alpha})`;
+        ctx2.lineWidth = 2;
+        ctx2.beginPath();
+        ctx2.arc(effect.x, effect.y, effect.radius + effect.elapsed * growth, 0, Math.PI * 2);
+        ctx2.stroke();
+      });
+    }
+    function renderPerkModal() {
+      const player = gameState.player;
+      if (!player.perkModalOpen) {
+        return;
+      }
+      ctx2.fillStyle = "rgba(0,0,0,0.7)";
+      ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+      const cardWidth = 300;
+      const cardHeight = 190;
+      const gap = 24;
+      const startX = (canvas2.width - (cardWidth * 3 + gap * 2)) / 2;
+      const topY = canvas2.height / 2 - cardHeight / 2;
+      const rerollAnimationDuration = 0.28;
+      const rerollAnimationProgress = player.perkRerollAnimationTimer > 0 ? Math.max(0, Math.min(1, player.perkRerollAnimationTimer / rerollAnimationDuration)) : 0;
+      player.perkChoices.forEach((choice, index) => {
+        const x = startX + index * (cardWidth + gap);
+        const y = topY;
+        const wobble = Math.sin((1 - rerollAnimationProgress) * 26 + index * 1.5) * 8 * rerollAnimationProgress;
+        const scale = 1 - rerollAnimationProgress * 0.08;
+        ctx2.save();
+        ctx2.translate(x + cardWidth * 0.5, y + cardHeight * 0.5);
+        ctx2.scale(scale, scale);
+        ctx2.translate(-cardWidth * 0.5 + wobble, -cardHeight * 0.5);
+        ctx2.fillStyle = "#1e2a3d";
+        ctx2.fillRect(0, 0, cardWidth, cardHeight);
+        ctx2.strokeStyle = "#86f0ff";
+        ctx2.strokeRect(0, 0, cardWidth, cardHeight);
+        const innerX = 16;
+        const innerY = 30;
+        const innerWidth = cardWidth - 32;
+        const innerBottom = cardHeight - 16;
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.rect(8, 8, cardWidth - 16, cardHeight - 16);
+        ctx2.clip();
+        ctx2.fillStyle = "#ffffff";
+        ctx2.font = "bold 18px monospace";
+        const titleLines = wrapTextLines(ctx2, choice.name, innerWidth);
+        let cursorY = innerY;
+        for (let i = 0; i < titleLines.length && cursorY <= innerBottom; i += 1) {
+          ctx2.fillText(titleLines[i], innerX, cursorY);
+          cursorY += 22;
+        }
+        ctx2.font = "13px monospace";
+        ctx2.fillStyle = "#d4e9ff";
+        const descriptionLines = wrapTextLines(ctx2, choice.description, innerWidth);
+        const tagLines = wrapTextLines(ctx2, `Tags: ${(choice.tags || []).join(", ")}`, innerWidth);
+        const tagBlockHeight = Math.max(12, tagLines.length * 13);
+        const iconY = innerBottom - tagBlockHeight - 18;
+        const descriptionLimit = iconY - 26;
+        for (let i = 0; i < descriptionLines.length && cursorY <= descriptionLimit; i += 1) {
+          ctx2.fillText(descriptionLines[i], innerX, cursorY);
+          cursorY += 17;
+        }
+        const tagEmojis = (choice.tags || []).map((tag) => perkTagEmoji(tag)).slice(0, 3);
+        const emojiSpacing = 90;
+        const emojiStartX = cardWidth * 0.5 - (tagEmojis.length - 1) * emojiSpacing / 2;
+        ctx2.font = "bold 40px monospace";
+        ctx2.fillStyle = `rgba(130, 184, 220, ${0.1 + rerollAnimationProgress * 0.12})`;
+        ctx2.textAlign = "center";
+        for (let i = 0; i < tagEmojis.length; i += 1) {
+          ctx2.fillText(tagEmojis[i], emojiStartX + i * emojiSpacing, iconY);
+        }
+        ctx2.fillStyle = "#9dc7ff";
+        ctx2.font = "11px monospace";
+        let tagsY = innerBottom - (tagLines.length - 1) * 13;
+        ctx2.textAlign = "start";
+        for (let i = 0; i < tagLines.length; i += 1) {
+          ctx2.fillText(tagLines[i], innerX, tagsY);
+          tagsY += 13;
+        }
+        ctx2.restore();
+        choice.__cardRect = { x, y, width: cardWidth, height: cardHeight };
+        ctx2.restore();
+      });
+      ctx2.fillStyle = "#ffffff";
+      ctx2.font = "16px monospace";
+      ctx2.textAlign = "center";
+      ctx2.fillText(`Choose a perk (${player.perkPoints} point${player.perkPoints === 1 ? "" : "s"} left)`, canvas2.width / 2, topY - 20);
+      const rerollWidth = 170;
+      const rerollHeight = 34;
+      const rerollX = canvas2.width * 0.5 - rerollWidth * 0.5;
+      const rerollY = topY + cardHeight + 16;
+      const selectionLocked = player.perkSelectionLockTimer > 0;
+      const rerollEnabled = !!player.perkRerollAvailable && !selectionLocked;
+      const buttonPulse = rerollEnabled ? 0.5 + 0.5 * Math.sin(gameState.time * 8) : 0;
+      const unlockProgress = 1 - Math.max(0, Math.min(1, player.perkSelectionLockTimer / 0.5));
+      if (selectionLocked) {
+        const overlayAlpha = 0.18 + 0.18 * Math.max(0, Math.min(1, player.perkSelectionLockTimer / 0.5));
+        player.perkChoices.forEach((choice) => {
+          const rect = choice.__cardRect;
+          if (!rect) {
+            return;
+          }
+          ctx2.fillStyle = `rgba(8, 14, 24, ${overlayAlpha})`;
+          ctx2.fillRect(rect.x, rect.y, rect.width, rect.height);
+          drawBorderProgress(ctx2, rect.x + 1.5, rect.y + 1.5, rect.width - 3, rect.height - 3, unlockProgress, "rgba(136, 228, 255, 0.95)");
+        });
+      }
+      ctx2.fillStyle = rerollEnabled ? `rgba(38, 66, 98, ${0.85 + buttonPulse * 0.1})` : "rgba(46, 46, 56, 0.8)";
+      ctx2.fillRect(rerollX, rerollY, rerollWidth, rerollHeight);
+      ctx2.strokeStyle = rerollEnabled ? "rgba(138, 228, 255, 0.95)" : "rgba(120, 120, 130, 0.8)";
+      ctx2.lineWidth = 2;
+      ctx2.strokeRect(rerollX, rerollY, rerollWidth, rerollHeight);
+      ctx2.fillStyle = rerollEnabled ? "#d9f8ff" : "#8d96a2";
+      ctx2.font = "bold 14px monospace";
+      ctx2.textBaseline = "middle";
+      ctx2.fillText(
+        selectionLocked ? `Unlocking ${player.perkSelectionLockTimer.toFixed(1)}s` : rerollEnabled ? IS_DEBUG_MODE ? "Reroll (infinite)" : "Reroll (1 left)" : "Reroll used",
+        canvas2.width * 0.5,
+        rerollY + rerollHeight * 0.5 + 1
+      );
+      player.perkRerollRect = { x: rerollX, y: rerollY, width: rerollWidth, height: rerollHeight };
+      ctx2.textAlign = "start";
+      ctx2.textBaseline = "alphabetic";
+    }
+    function renderPerkPointCounter() {
+      const points = gameState.player.perkPoints;
+      if (points <= 0 || gameState.player.perkModalOpen || gameState.gameOver) {
+        return;
+      }
+      const baseX = canvas2.width - 28;
+      const baseY = canvas2.height - 24;
+      const t = gameState.time;
+      const bobY = Math.sin(t * 5.2) * 5;
+      const bobX = Math.sin(t * 3.8) * 2;
+      const pulse = 0.92 + (Math.sin(t * 6.8) * 0.5 + 0.5) * 0.16;
+      ctx2.save();
+      ctx2.translate(baseX + bobX, baseY + bobY);
+      ctx2.scale(pulse, pulse);
+      const label = `Perk Points: ${points}`;
+      ctx2.font = "bold 18px monospace";
+      const textWidth = ctx2.measureText(label).width;
+      const paddingX = 14;
+      const width = textWidth + paddingX * 2;
+      const height = 34;
+      ctx2.fillStyle = "rgba(18, 30, 44, 0.82)";
+      ctx2.fillRect(-width, -height, width, height);
+      ctx2.strokeStyle = "rgba(126, 244, 210, 0.9)";
+      ctx2.lineWidth = 2;
+      ctx2.strokeRect(-width, -height, width, height);
+      ctx2.fillStyle = "#9fffe0";
+      ctx2.textAlign = "right";
+      ctx2.textBaseline = "middle";
+      ctx2.fillText(label, -paddingX, -height * 0.5 + 1);
+      ctx2.restore();
+      ctx2.textAlign = "start";
+      ctx2.textBaseline = "alphabetic";
+    }
+    function renderGameOverOverlay() {
+      if (!gameState.gameOver) {
+        return;
+      }
+      const progress = Math.max(0, Math.min(1, gameState.gameOverElapsed / GAME_OVER_ANIMATION_TIME));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      ctx2.fillStyle = `rgba(5, 0, 8, ${0.25 + 0.55 * eased})`;
+      ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+      const panelWidth = Math.min(canvas2.width - 80, 560);
+      const panelHeight = 220;
+      const panelX = (canvas2.width - panelWidth) * 0.5;
+      const panelY = canvas2.height * 0.5 - panelHeight * 0.5 + (1 - eased) * 18;
+      ctx2.fillStyle = `rgba(20, 12, 24, ${0.5 + 0.35 * eased})`;
+      ctx2.fillRect(panelX, panelY, panelWidth, panelHeight);
+      ctx2.strokeStyle = `rgba(255, 118, 145, ${0.35 + 0.5 * eased})`;
+      ctx2.lineWidth = 2;
+      ctx2.strokeRect(panelX, panelY, panelWidth, panelHeight);
+      ctx2.textAlign = "center";
+      ctx2.fillStyle = `rgba(255, 118, 145, ${0.5 + 0.5 * eased})`;
+      ctx2.font = "bold 56px monospace";
+      ctx2.fillText("GAME OVER", canvas2.width * 0.5, panelY + 92);
+      ctx2.fillStyle = `rgba(237, 219, 228, ${0.45 + 0.55 * eased})`;
+      ctx2.font = "18px monospace";
+      ctx2.fillText(`Survived ${gameState.time.toFixed(1)}s`, canvas2.width * 0.5, panelY + 132);
+      if (progress >= 1) {
+        const pulse = 0.65 + 0.35 * Math.sin(gameState.time * 6);
+        ctx2.fillStyle = `rgba(255, 224, 166, ${0.55 + 0.45 * pulse})`;
+        ctx2.font = "16px monospace";
+        ctx2.fillText("Press R for a new run or SPACE for title", canvas2.width * 0.5, panelY + 172);
+      }
+      ctx2.textAlign = "start";
+    }
+    return {
+      ctx: ctx2,
+      render() {
+        renderBackground();
+        const camera = getCameraOffset();
+        const shakePower = gameState.paused ? 0 : gameState.screenFx?.shake || 0;
+        const shakeX = (Math.random() * 2 - 1) * shakePower;
+        const shakeY = (Math.random() * 2 - 1) * shakePower;
+        ctx2.save();
+        ctx2.translate(shakeX - camera.x, shakeY - camera.y);
+        renderWorldObstacles();
+        renderIndicators();
+        renderDrops();
+        renderWeaponReticle();
+        renderEntities();
+        renderShoutWaves();
+        renderPlayerReloadIndicator();
+        renderLingeringZones();
+        renderNukeWaves();
+        renderFireballs();
+        renderProjectiles();
+        renderSlashEffects();
+        renderFloatingTexts();
+        renderEffects();
+        ctx2.restore();
+        renderOffscreenEnemyIndicators();
+        if (gameState.screenFx?.actionFlash > 0) {
+          ctx2.fillStyle = `rgba(126, 224, 255, ${Math.min(0.2, gameState.screenFx.actionFlash * 0.22)})`;
+          ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+        }
+        if (gameState.screenFx?.damageFlash > 0) {
+          ctx2.fillStyle = `rgba(255, 120, 120, ${Math.min(0.24, gameState.screenFx.damageFlash * 0.26)})`;
+          ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+        }
+        renderPerkPointCounter();
+        drawPauseOverlay();
+        renderPerkModal();
+        renderGameOverOverlay();
+        drawTitleScreen();
+      }
+    };
+  }
+
+  // src/core/gameServices.js
+  function createEventBus() {
+    const listeners = /* @__PURE__ */ new Map();
+    return {
+      on(eventName, handler) {
+        if (!listeners.has(eventName)) {
+          listeners.set(eventName, /* @__PURE__ */ new Set());
+        }
+        listeners.get(eventName).add(handler);
+        return () => {
+          listeners.get(eventName)?.delete(handler);
+        };
+      },
+      emit(eventName, payload) {
+        const handlers = listeners.get(eventName);
+        if (!handlers) {
+          return;
+        }
+        handlers.forEach((handler) => handler(payload));
+      },
+      clear() {
+        listeners.clear();
+      }
+    };
+  }
+  function createGameServices({ gameState, canvas: canvas2, documentRef, isDebugMode }) {
+    const events = createEventBus();
+    let weaponSystem = gameState.systems.weaponSystem ?? null;
+    let perkEngine = gameState.systems.perkEngine ?? null;
+    return {
+      canvas: canvas2,
+      document: documentRef,
+      events,
+      gameState,
+      isDebugMode,
+      getPlayer() {
+        return gameState.player;
+      },
+      getWorld() {
+        return gameState.systems.world;
+      },
+      setWorld(world) {
+        gameState.systems.world = world;
+        events.emit("world:changed", world);
+      },
+      getWeaponSystem() {
+        return weaponSystem;
+      },
+      setWeaponSystem(nextWeaponSystem) {
+        weaponSystem = nextWeaponSystem;
+        gameState.systems.weaponSystem = nextWeaponSystem;
+        events.emit("weaponSystem:changed", nextWeaponSystem);
+      },
+      getPerkEngine() {
+        return perkEngine;
+      },
+      setPerkEngine(nextPerkEngine) {
+        perkEngine = nextPerkEngine;
+        gameState.systems.perkEngine = nextPerkEngine;
+        events.emit("perkEngine:changed", nextPerkEngine);
+      },
+      resetEvents() {
+        events.clear();
+      }
+    };
+  }
+
+  // src/core/state.js
+  function createInitialState() {
+    return {
+      running: false,
+      paused: true,
+      titleScreen: true,
+      gameOver: false,
+      gameOverElapsed: 0,
+      time: 0,
+      waveTimer: 0,
+      notifications: [],
+      player: {
+        x: CANVAS.width * 0.5,
+        y: CANVAS.height * 0.5,
+        hp: GAME_CONFIG.player.baseHp,
+        maxHp: GAME_CONFIG.player.baseHp,
+        xp: 0,
+        level: 1,
+        xpToNext: GAME_CONFIG.player.baseXpToNext,
+        radius: BALANCE.playerRadius,
+        speed: BALANCE.playerSpeed,
+        tagCounts: {
+          projectile: 0,
+          precision: 0,
+          aoe: 0,
+          chain: 0,
+          survival: 0,
+          reload: 0,
+          mobility: 0
+        },
+        ownedPerks: [],
+        ownedPerkIds: /* @__PURE__ */ new Set(),
+        perkChoices: [],
+        perkPoints: 0,
+        perkModalOpen: false,
+        perkRerollAvailable: false,
+        perkRerollAnimationTimer: 0,
+        perkRerollRect: null,
+        perkSelectionLockTimer: 0,
+        damageMultiplier: 1,
+        fireRateMultiplier: 1,
+        projectileSpeedMultiplier: 1,
+        spreadMultiplier: 1,
+        maxHpBonus: 0,
+        lifeSteal: 0,
+        moveSpeedMultiplier: 1,
+        reloadSpeedMultiplier: 1,
+        ammoCapacityBonus: 0,
+        critChance: 0,
+        critMultiplier: GAME_CONFIG.player.baseCritMultiplier,
+        chainChance: 0,
+        aoeRadius: 0,
+        pickupRadiusBonus: 0,
+        rageTimer: 0,
+        infiniteAmmoTimer: 0,
+        hasInfiniteAmmo: false,
+        pickupDamageMultiplier: 1,
+        pickupMoveSpeedMultiplier: 1,
+        activeDurationBars: [],
+        blinkDistance: GAME_CONFIG.skills.blink.distance,
+        blinkCooldown: GAME_CONFIG.skills.blink.cooldown,
+        blinkCharges: 1,
+        blinkMaxCharges: 1,
+        blinkChargeTimer: 0,
+        blinkCooldownRemaining: 0,
+        shoutCooldown: GAME_CONFIG.skills.shout.cooldown,
+        shoutCooldownRemaining: 0,
+        shoutRadius: GAME_CONFIG.skills.shout.radius,
+        shoutPreview: {
+          active: false
+        },
+        fireballCooldown: GAME_CONFIG.skills.fireball.cooldown,
+        fireballCooldownRemaining: 0,
+        moveSpeedTemporaryMultiplier: 1,
+        perfectReloadMoveBoostTimer: 0,
+        blinkPreview: {
+          active: false,
+          x: 0,
+          y: 0
+        },
+        aim: {
+          x: CANVAS.width * 0.5 + 120,
+          y: CANVAS.height * 0.5
+        }
+      },
+      enemies: [],
+      projectiles: [],
+      indicators: [],
+      drops: [],
+      effects: [],
+      floatingTexts: [],
+      slashEffects: [],
+      shoutWaves: [],
+      fireballs: [],
+      lingeringZones: [],
+      nukeWaves: [],
+      pickupTypeCooldowns: {},
+      screenFx: {
+        shake: 0,
+        damageFlash: 0,
+        actionFlash: 0,
+        hitStop: 0
+      },
+      runStats: {
+        startedAt: 0,
+        kills: 0,
+        recorded: false
+      },
+      runHistory: [],
+      runHistorySort: "latest",
+      appVersion: "0.0",
+      perkProgress: {
+        seen: {},
+        activated: {},
+        disabled: {}
+      },
+      titlePerkLibraryOpen: false,
+      titlePerkLibraryFilter: "all",
+      titlePerkLibraryScrollOffset: 0,
+      titlePerkLibraryScrollMax: 0,
+      titlePerkLibraryDragging: false,
+      titlePerkLibraryDragLastY: 0,
+      titleStartRect: null,
+      titleSortRects: [],
+      titlePerkLibraryToggleRect: null,
+      titlePerkLibraryModalRect: null,
+      titlePerkLibraryScrollAreaRect: null,
+      titlePerkLibraryCloseRect: null,
+      titlePerkLibraryFilterRect: null,
+      titlePerkLibraryFilterDropdownOpen: false,
+      titlePerkLibraryFilterRects: [],
+      systems: {}
+    };
+  }
+
+  // src/entities/projectile.js
+  function createProjectile({ position, velocity, damage, lifetime, owner, color = "#ffe18a", radius = 4, modifiers = [], ...extra }) {
+    return {
+      position: { ...position },
+      velocity: { ...velocity },
+      damage,
+      lifetime,
+      owner,
+      color,
+      radius,
+      modifiers,
+      alive: true,
+      ...extra
+    };
+  }
+  function updateProjectile(projectile, dt) {
+    projectile.position.x += projectile.velocity.x * dt;
+    projectile.position.y += projectile.velocity.y * dt;
+    projectile.lifetime -= dt;
+    if (projectile.lifetime <= 0) {
+      projectile.alive = false;
+      projectile.modifiers.forEach((modifier) => {
+        if (typeof modifier.onExpire === "function") {
+          modifier.onExpire(projectile);
+        }
+      });
+    }
+  }
+
+  // src/systems/enemies/common.js
+  function spawnFloatingText(gameState, text, x, y, color, size = 24, kind = "damage") {
+    gameState.floatingTexts.push({
+      text,
+      x,
+      y,
+      vx: (Math.random() * 2 - 1) * 26,
+      vy: -80 - Math.random() * 24,
+      gravity: 42,
+      elapsed: 0,
+      duration: 0.68,
+      color,
+      size,
+      kind
+    });
+  }
+  function moveEnemyWithTerrain(enemy, dir, speed, dt, world, moveDirection = 1) {
+    const treeSlow = getMovementSlowMultiplier(world, enemy.x, enemy.y, enemy.radius);
+    const finalSpeed = speed * moveDirection * treeSlow;
+    const nextX = enemy.x + dir.x * finalSpeed * dt;
+    const nextY = enemy.y + dir.y * finalSpeed * dt;
+    const resolved = resolvePositionAgainstMountains(world, nextX, nextY, enemy.radius);
+    enemy.x = resolved.x;
+    enemy.y = resolved.y;
+  }
+  function normalize(dx, dy) {
+    const length = Math.hypot(dx, dy) || 1;
+    return { x: dx / length, y: dy / length };
+  }
+  function pickShooterAimPoint(originX, originY, player, playerVelocity, projectileSpeed) {
+    const predictiveChance = GAME_CONFIG.enemies.ai.predictiveAimChance;
+    if (Math.random() >= predictiveChance) {
+      return { x: player.x, y: player.y };
+    }
+    const distance = Math.hypot(player.x - originX, player.y - originY);
+    const travelTime = distance / Math.max(1, projectileSpeed);
+    return {
+      x: player.x + playerVelocity.x * travelTime,
+      y: player.y + playerVelocity.y * travelTime
+    };
+  }
+
+  // src/systems/enemies/assaultShooter.js
+  var ENEMY_CONFIG = GAME_CONFIG.enemies.archetypes;
+  function updateAssaultShooterBehavior(gameState, enemy, player, world, dt, speedMultiplier, playerVelocity) {
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const dir = normalize(dx, dy);
+    const tooClose = distance < enemy.preferredDistance - 26;
+    const tooFar = distance > enemy.preferredDistance + 26;
+    const moveDirection = tooClose ? -1 : tooFar ? 1 : 0;
+    moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world, moveDirection);
+    if (enemy.burstShotsRemaining <= 0) {
+      enemy.fireTimer += dt;
+      if (enemy.fireTimer >= enemy.fireCooldown) {
+        enemy.fireTimer = 0;
+        enemy.burstShotsRemaining = enemy.burstCount;
+        enemy.burstTimer = 0;
+        enemy.waveSeed = Math.random() * Math.PI * 2;
+      }
+    }
+    if (enemy.burstShotsRemaining <= 0) {
+      return;
+    }
+    enemy.burstTimer += dt;
+    while (enemy.burstTimer >= enemy.burstInterval && enemy.burstShotsRemaining > 0) {
+      enemy.burstTimer -= enemy.burstInterval;
+      const shotIndex = enemy.burstCount - enemy.burstShotsRemaining;
+      const progress = enemy.burstCount <= 1 ? 0 : shotIndex / (enemy.burstCount - 1);
+      const wavePhase = enemy.waveSeed + progress * Math.PI * 2 * enemy.waveFrequency;
+      const lateralOffset = Math.sin(wavePhase) * enemy.waveAmplitude;
+      const perp = { x: -dir.y, y: dir.x };
+      const spawnX = enemy.x + perp.x * lateralOffset;
+      const spawnY = enemy.y + perp.y * lateralOffset;
+      const aimPoint = pickShooterAimPoint(spawnX, spawnY, player, playerVelocity, enemy.projectileSpeed);
+      const toAim = normalize(aimPoint.x - spawnX, aimPoint.y - spawnY);
+      const baseAngle = Math.atan2(toAim.y, toAim.x);
+      const angle = baseAngle + (Math.random() * 2 - 1) * enemy.aimJitter;
+      const speed = enemy.projectileSpeed * (0.95 + Math.random() * ENEMY_CONFIG.assaultShooter.projectile.speedVariance);
+      gameState.projectiles.push(
+        createProjectile({
+          position: { x: spawnX, y: spawnY },
+          velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+          damage: enemy.projectileDamage,
+          lifetime: enemy.projectileLifetime,
+          owner: "enemy",
+          color: ENEMY_CONFIG.assaultShooter.projectile.color,
+          radius: ENEMY_CONFIG.assaultShooter.projectile.radius,
+          modifiers: []
+        })
+      );
+      enemy.burstShotsRemaining -= 1;
+    }
+  }
+
+  // src/systems/indicatorSystem.js
+  function spawnIndicator(list, indicator) {
+    list.push({
+      elapsed: 0,
+      color: "red",
+      ...indicator
+    });
+  }
+  function updateIndicators(list, dt) {
+    const triggered = [];
+    for (let index = list.length - 1; index >= 0; index -= 1) {
+      const indicator = list[index];
+      indicator.elapsed += dt;
+      if (indicator.elapsed >= indicator.duration) {
+        triggered.push(indicator);
+        list.splice(index, 1);
+      }
+    }
+    return triggered;
+  }
+
+  // src/systems/enemies/bomber.js
+  var AI_CONFIG = GAME_CONFIG.enemies.ai;
+  var BOMBER_CONFIG = GAME_CONFIG.enemies.archetypes.bomber;
+  function explodeBomber(gameState, enemy, player, enemyIndex) {
+    const radius = enemy.explosionRadius || BOMBER_CONFIG.explosionRadius;
+    const damage = enemy.explosionDamage || BOMBER_CONFIG.explosionDamage;
+    const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+    if (distance <= radius) {
+      player.hp -= damage;
+      spawnFloatingText(gameState, `-${damage}`, player.x, player.y - player.radius - 8, "255,142,150", 22, "damage");
+      gameState.screenFx.shake = Math.min(14, gameState.screenFx.shake + 2.3);
+      gameState.screenFx.damageFlash = Math.min(1, gameState.screenFx.damageFlash + 0.2);
+    }
+    gameState.effects.push(
+      {
+        x: enemy.x,
+        y: enemy.y,
+        radius: 16,
+        elapsed: 0,
+        duration: 0.34,
+        growth: 34,
+        color: "255, 118, 140"
+      },
+      {
+        x: enemy.x,
+        y: enemy.y,
+        radius: radius * 0.52,
+        elapsed: 0,
+        duration: 0.45,
+        growth: 14,
+        color: "255, 190, 162"
+      }
+    );
+    gameState.enemies.splice(enemyIndex, 1);
+  }
+  function updateBomberBehavior(gameState, enemy, enemyIndex, player, world, dt, speedMultiplier) {
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const dir = normalize(dx, dy);
+    const detonationDistance = player.radius + enemy.radius + (enemy.detonationRange || BOMBER_CONFIG.detonationRange);
+    if (!enemy.isPrimed && distance <= detonationDistance) {
+      enemy.isPrimed = true;
+      enemy.fuseTimer = enemy.fuseDuration;
+      spawnIndicator(gameState.indicators, {
+        type: "circle",
+        position: { x: enemy.x, y: enemy.y },
+        size: { radius: enemy.explosionRadius },
+        duration: enemy.fuseDuration
+      });
+    }
+    if (!enemy.isPrimed) {
+      moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world);
+      return false;
+    }
+    moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world, AI_CONFIG.bomberSlowFactorWhenPrimed);
+    enemy.fuseTimer -= dt;
+    if (enemy.fuseTimer <= 0) {
+      explodeBomber(gameState, enemy, player, enemyIndex);
+      return true;
+    }
+    return false;
+  }
+
+  // src/systems/enemies/chaserSlime.js
+  function updateChaserSlimeBehavior(enemy, player, world, dt, speedMultiplier) {
+    const dir = normalize(player.x - enemy.x, player.y - enemy.y);
+    moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world);
+  }
+
+  // src/systems/enemies/flyingBomber.js
+  var FLY_CONFIG = GAME_CONFIG.enemies.archetypes.flyingBomber;
+  function computeFlyingBomberPath(player, playerVelocity) {
+    const halfW = CANVAS.width * 0.5;
+    const halfH = CANVAS.height * 0.5;
+    const margin = 200;
+    const usePredicted = Math.random() < 0.5;
+    const lookAheadTime = 1.2;
+    const targetX = usePredicted ? player.x + playerVelocity.x * lookAheadTime : player.x;
+    const targetY = usePredicted ? player.y + playerVelocity.y * lookAheadTime : player.y;
+    const edge = Math.floor(Math.random() * 4);
+    let fromX, fromY;
+    if (edge === 0) {
+      fromX = player.x - halfW - margin;
+      fromY = targetY + (Math.random() * 2 - 1) * halfH * 0.6;
+    } else if (edge === 1) {
+      fromX = player.x + halfW + margin;
+      fromY = targetY + (Math.random() * 2 - 1) * halfH * 0.6;
+    } else if (edge === 2) {
+      fromX = targetX + (Math.random() * 2 - 1) * halfW * 0.6;
+      fromY = player.y - halfH - margin;
+    } else {
+      fromX = targetX + (Math.random() * 2 - 1) * halfW * 0.6;
+      fromY = player.y + halfH + margin;
+    }
+    const dxRaw = targetX - fromX;
+    const dyRaw = targetY - fromY;
+    const lenRaw = Math.hypot(dxRaw, dyRaw) || 1;
+    const dirX = dxRaw / lenRaw;
+    const dirY = dyRaw / lenRaw;
+    const diagonal = Math.hypot(CANVAS.width, CANVAS.height);
+    const totalLen = lenRaw + diagonal + margin;
+    const exitX = fromX + dirX * totalLen;
+    const exitY = fromY + dirY * totalLen;
+    return { fromX, fromY, dirX, dirY, exitX, exitY };
+  }
+  function updateFlyingBomberBehavior(gameState, enemy, player, dt) {
+    if (enemy.flyPhase === "warning") {
+      enemy.warningTimer -= dt;
+      if (enemy.warningTimer <= 0) {
+        enemy.flyPhase = "flying";
+        enemy.distTraveled = 0;
+        enemy.bombDistAccum = FLY_CONFIG.bombInterval * 0.5;
+      }
+      return;
+    }
+    if (enemy.flyPhase === "flying") {
+      const step = FLY_CONFIG.flySpeed * dt;
+      enemy.x += enemy.flyDirX * step;
+      enemy.y += enemy.flyDirY * step;
+      enemy.distTraveled = (enemy.distTraveled || 0) + step;
+      enemy.bombDistAccum = (enemy.bombDistAccum || 0) + step;
+      while (enemy.bombDistAccum >= FLY_CONFIG.bombInterval) {
+        enemy.bombDistAccum -= FLY_CONFIG.bombInterval;
+        dropBomb(gameState, enemy, player);
+      }
+      const halfW = CANVAS.width * 0.5;
+      const halfH = CANVAS.height * 0.5;
+      const offX = enemy.x < player.x - halfW - 120 || enemy.x > player.x + halfW + 120;
+      const offY = enemy.y < player.y - halfH - 120 || enemy.y > player.y + halfH + 120;
+      const fromLen = Math.hypot(enemy.flyExitX - enemy.flyFromX, enemy.flyExitY - enemy.flyFromY);
+      if ((offX || offY) && enemy.distTraveled >= fromLen * 0.4) {
+        enemy.isDone = true;
+      }
+    }
+  }
+  function dropBomb(gameState, enemy, player) {
+    const bx = enemy.x;
+    const by = enemy.y;
+    const radius = FLY_CONFIG.bombRadius;
+    const damage = FLY_CONFIG.bombDamage;
+    spawnIndicator(gameState.indicators, {
+      type: "circle",
+      position: { x: bx, y: by },
+      size: { radius },
+      duration: FLY_CONFIG.bombTelegraphDuration,
+      source: "flyingBomber",
+      onTrigger() {
+        const dist = Math.hypot(player.x - bx, player.y - by);
+        if (dist <= radius) {
+          player.hp -= damage;
+          spawnFloatingText(gameState, `-${damage}`, player.x, player.y - player.radius - 8, "255,142,150", 22, "damage");
+          gameState.screenFx.shake = Math.min(14, gameState.screenFx.shake + 2.1);
+          gameState.screenFx.damageFlash = Math.min(1, gameState.screenFx.damageFlash + 0.18);
+        }
+        gameState.effects.push(
+          { x: bx, y: by, radius: 14, elapsed: 0, duration: 0.32, growth: 30, color: "255, 90, 120" },
+          { x: bx, y: by, radius: radius * 0.55, elapsed: 0, duration: 0.52, growth: 11, color: "255, 185, 100" }
+        );
+      }
+    });
+  }
+
+  // src/systems/enemies/mortar.js
+  var AI_CONFIG2 = GAME_CONFIG.enemies.ai;
+  var ENEMY_CONFIG2 = GAME_CONFIG.enemies.archetypes;
+  function chooseMortarTarget(player, reservedTargets) {
+    let bestTarget = { x: player.x, y: player.y };
+    let bestSpacing = -Infinity;
+    const targetJitter = AI_CONFIG2.mortarTargetJitter;
+    const targetSpread = AI_CONFIG2.mortarTargetSpread;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const candidate = {
+        x: player.x + (Math.random() * 2 - 1) * targetJitter,
+        y: player.y + (Math.random() * 2 - 1) * targetJitter
+      };
+      let closest = Infinity;
+      for (let index = 0; index < reservedTargets.length; index += 1) {
+        const target = reservedTargets[index];
+        const distance = Math.hypot(candidate.x - target.x, candidate.y - target.y);
+        if (distance < closest) {
+          closest = distance;
+        }
+      }
+      if (closest > bestSpacing) {
+        bestSpacing = closest;
+        bestTarget = candidate;
+      }
+      if (closest >= targetSpread) {
+        return candidate;
+      }
+    }
+    return bestTarget;
+  }
+  function updateMortarBehavior(gameState, enemy, player, world, dt, speedMultiplier, reservedMortarTargets) {
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const dir = normalize(dx, dy);
+    const tooClose = distance < enemy.preferredDistance - 36;
+    const tooFar = distance > enemy.preferredDistance + 36;
+    const moveDirection = tooClose ? -1 : tooFar ? 0.65 : 0;
+    moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world, moveDirection);
+    enemy.throwTimer += dt;
+    if (enemy.throwTimer < enemy.throwCooldown || distance > enemy.throwRange) {
+      return;
+    }
+    const dangerRadius = AI_CONFIG2.mortarDangerRadius;
+    enemy.throwTimer = 0;
+    const target = chooseMortarTarget(player, reservedMortarTargets);
+    reservedMortarTargets.push(target);
+    spawnIndicator(gameState.indicators, {
+      type: "circle",
+      position: target,
+      size: { radius: dangerRadius },
+      duration: AI_CONFIG2.mortarTelegraphDuration,
+      source: "mortar",
+      onTrigger() {
+        const hit = Math.hypot(player.x - target.x, player.y - target.y) <= dangerRadius;
+        if (hit) {
+          const damage = ENEMY_CONFIG2.mortar.impactDamage;
+          player.hp -= damage;
+          spawnFloatingText(gameState, `-${damage}`, player.x, player.y - player.radius - 8, "255,142,150", 22, "damage");
+          gameState.screenFx.shake = Math.min(14, gameState.screenFx.shake + 2.4);
+          gameState.screenFx.damageFlash = Math.min(1, gameState.screenFx.damageFlash + 0.22);
+        }
+        gameState.effects.push(
+          {
+            x: target.x,
+            y: target.y,
+            radius: 18,
+            elapsed: 0,
+            duration: 0.38,
+            growth: 30,
+            color: "255, 146, 96"
+          },
+          {
+            x: target.x,
+            y: target.y,
+            radius: dangerRadius * 0.62,
+            elapsed: 0,
+            duration: 0.5,
+            growth: 14,
+            color: "255, 214, 130"
+          }
+        );
+      }
+    });
+  }
+
+  // src/systems/enemies/shooter.js
+  var ENEMY_CONFIG3 = GAME_CONFIG.enemies.archetypes;
+  function updateShooterBehavior(gameState, enemy, player, world, dt, speedMultiplier, playerVelocity) {
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const dir = normalize(dx, dy);
+    const tooClose = distance < enemy.preferredDistance - 24;
+    const tooFar = distance > enemy.preferredDistance + 24;
+    const moveDirection = tooClose ? -1 : tooFar ? 1 : 0;
+    moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world, moveDirection);
+    enemy.fireTimer += dt;
+    if (enemy.fireTimer >= enemy.fireCooldown) {
+      enemy.fireTimer = 0;
+      const aimPoint = pickShooterAimPoint(enemy.x, enemy.y, player, playerVelocity, ENEMY_CONFIG3.shooter.projectile.speed);
+      const fireDir = normalize(aimPoint.x - enemy.x, aimPoint.y - enemy.y);
+      gameState.projectiles.push(
+        createProjectile({
+          position: { x: enemy.x, y: enemy.y },
+          velocity: { x: fireDir.x * ENEMY_CONFIG3.shooter.projectile.speed, y: fireDir.y * ENEMY_CONFIG3.shooter.projectile.speed },
+          damage: ENEMY_CONFIG3.shooter.projectile.damage,
+          lifetime: ENEMY_CONFIG3.shooter.projectile.lifetime,
+          owner: "enemy",
+          color: ENEMY_CONFIG3.shooter.projectile.color,
+          radius: ENEMY_CONFIG3.shooter.projectile.radius,
+          modifiers: []
+        })
+      );
+    }
+  }
+
+  // src/systems/enemies/shotgunShooter.js
+  var ENEMY_CONFIG4 = GAME_CONFIG.enemies.archetypes;
+  function updateShotgunShooterBehavior(gameState, enemy, player, world, dt, speedMultiplier, playerVelocity) {
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const dir = normalize(dx, dy);
+    const tooClose = distance < enemy.preferredDistance - 24;
+    const tooFar = distance > enemy.preferredDistance + 24;
+    const moveDirection = tooClose ? -1 : tooFar ? 1 : 0;
+    moveEnemyWithTerrain(enemy, dir, enemy.speed * speedMultiplier, dt, world, moveDirection);
+    enemy.fireTimer += dt;
+    if (enemy.fireTimer < enemy.fireCooldown) {
+      return;
+    }
+    enemy.fireTimer = 0;
+    const aimPoint = pickShooterAimPoint(enemy.x, enemy.y, player, playerVelocity, enemy.projectileSpeed);
+    const toAim = normalize(aimPoint.x - enemy.x, aimPoint.y - enemy.y);
+    const centerAngle = Math.atan2(toAim.y, toAim.x);
+    for (let pellet = 0; pellet < enemy.pelletCount; pellet += 1) {
+      const spread = (Math.random() * 2 - 1) * enemy.pelletSpread;
+      const angle = centerAngle + spread;
+      const speed = enemy.projectileSpeed * (0.9 + Math.random() * 0.2);
+      gameState.projectiles.push(
+        createProjectile({
+          position: { x: enemy.x, y: enemy.y },
+          velocity: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+          damage: enemy.projectileDamage,
+          lifetime: enemy.projectileLifetime,
+          owner: "enemy",
+          color: ENEMY_CONFIG4.shotgunShooter.projectile.color,
+          radius: ENEMY_CONFIG4.shotgunShooter.projectile.radius,
+          modifiers: []
+        })
+      );
+    }
+  }
+
+  // src/systems/effectSystem.js
+  function updateEffects(gameState, dt) {
+    for (let index = gameState.effects.length - 1; index >= 0; index -= 1) {
+      const effect = gameState.effects[index];
+      if (typeof effect.vx === "number" || typeof effect.vy === "number") {
+        effect.x += (effect.vx || 0) * dt;
+        effect.y += (effect.vy || 0) * dt;
+        if (effect.drag) {
+          const damping = Math.max(0, 1 - effect.drag * dt);
+          effect.vx = (effect.vx || 0) * damping;
+          effect.vy = (effect.vy || 0) * damping;
+        }
+      }
+      effect.elapsed += dt;
+      if (effect.elapsed >= effect.duration) {
+        gameState.effects.splice(index, 1);
+      }
+    }
+  }
+  function updateSlashEffects(gameState, dt) {
+    for (let index = gameState.slashEffects.length - 1; index >= 0; index -= 1) {
+      const slash = gameState.slashEffects[index];
+      slash.elapsed += dt;
+      if (slash.elapsed >= slash.duration) {
+        gameState.slashEffects.splice(index, 1);
+      }
+    }
+  }
+  function updateFloatingTexts(gameState, dt) {
+    for (let index = gameState.floatingTexts.length - 1; index >= 0; index -= 1) {
+      const text = gameState.floatingTexts[index];
+      text.elapsed += dt;
+      text.x += text.vx * dt;
+      text.y += text.vy * dt;
+      text.vy += (text.gravity ?? -16) * dt;
+      if (text.elapsed >= text.duration) {
+        gameState.floatingTexts.splice(index, 1);
+      }
+    }
+    gameState.screenFx.shake = Math.max(0, gameState.screenFx.shake - dt * 18);
+    gameState.screenFx.damageFlash = Math.max(0, gameState.screenFx.damageFlash - dt * 2.8);
+    gameState.screenFx.actionFlash = Math.max(0, gameState.screenFx.actionFlash - dt * 2.8);
+  }
+
+  // src/systems/projectileSystem.js
+  function spawnProjectileObstacleImpact(gameState, projectile, collision) {
+    const hitX = collision?.x ?? projectile.position.x;
+    const hitY = collision?.y ?? projectile.position.y;
+    const speed = Math.hypot(projectile.velocity.x, projectile.velocity.y);
+    const baseRadius = Math.max(2, projectile.radius * 0.8);
+    const ringGrowth = Math.min(34, 14 + speed * 0.02);
+    gameState.effects.push({
+      x: hitX,
+      y: hitY,
+      radius: baseRadius,
+      elapsed: 0,
+      duration: 0.16,
+      growth: ringGrowth,
+      color: projectile.owner === "enemy" ? "255,162,170" : "255,224,170"
+    });
+    const impactAngle = Math.atan2(projectile.velocity.y, projectile.velocity.x);
+    const sparkCount = projectile.owner === "enemy" ? 5 : 7;
+    for (let i = 0; i < sparkCount; i += 1) {
+      const spread = (Math.random() - 0.5) * Math.PI * 0.9;
+      const angle = impactAngle + Math.PI + spread;
+      const sparkSpeed = 34 + Math.random() * 58;
+      const sparkRadius = 1.4 + Math.random() * 1.8;
+      gameState.effects.push({
+        kind: "particle",
+        x: hitX,
+        y: hitY,
+        vx: Math.cos(angle) * sparkSpeed,
+        vy: Math.sin(angle) * sparkSpeed,
+        drag: 5.2,
+        radius: sparkRadius,
+        growth: -2.4,
+        elapsed: 0,
+        duration: 0.2 + Math.random() * 0.1,
+        color: projectile.owner === "enemy" ? "255,148,158" : "255,214,168"
+      });
+    }
+  }
+  function updateProjectiles(services, dt) {
+    const gameState = services.gameState;
+    const canvas2 = services.canvas;
+    const world = services.getWorld();
+    const viewMinX = gameState.player.x - canvas2.width * 0.5 - 40;
+    const viewMaxX = gameState.player.x + canvas2.width * 0.5 + 40;
+    const viewMinY = gameState.player.y - canvas2.height * 0.5 - 40;
+    const viewMaxY = gameState.player.y + canvas2.height * 0.5 + 40;
+    for (let index = gameState.projectiles.length - 1; index >= 0; index -= 1) {
+      const projectile = gameState.projectiles[index];
+      let obstacleCollision = null;
+      updateProjectile(projectile, dt);
+      if (projectile.owner === "player" && projectile.isFireArrow) {
+        igniteTreesAt(world, projectile.position.x, projectile.position.y, projectile.radius + 6);
+      }
+      if (isProjectileBlockedByMountain(world, projectile.position.x, projectile.position.y, projectile.radius)) {
+        obstacleCollision = getMountainCollisionNormal(world, projectile.position.x, projectile.position.y, projectile.radius);
+        if (projectile.owner === "player" && projectile.bounceRemaining > 0) {
+          const collision = obstacleCollision;
+          if (collision) {
+            const dot = projectile.velocity.x * collision.nx + projectile.velocity.y * collision.ny;
+            projectile.velocity.x -= 2 * dot * collision.nx;
+            projectile.velocity.y -= 2 * dot * collision.ny;
+            projectile.velocity.x *= 1.02;
+            projectile.velocity.y *= 1.02;
+            projectile.position.x = collision.x;
+            projectile.position.y = collision.y;
+            projectile.bounceRemaining -= 1;
+          } else {
+            projectile.alive = false;
+            spawnProjectileObstacleImpact(gameState, projectile, obstacleCollision);
+          }
+        } else {
+          projectile.alive = false;
+          spawnProjectileObstacleImpact(gameState, projectile, obstacleCollision);
+        }
+      }
+      if (!projectile.alive || projectile.position.x < viewMinX || projectile.position.x > viewMaxX || projectile.position.y < viewMinY || projectile.position.y > viewMaxY) {
+        gameState.projectiles.splice(index, 1);
+      }
+    }
+  }
+
+  // src/showcase/main.js
+  var DT = 1 / 60;
+  var DIFFICULTY = 10;
+  var SPEED_MULT = 1;
+  var PLAYER_MAX_HP = 140;
+  var PLAYER_RESPAWN_DELAY = 0.95;
+  var BOMBER_RESPAWN_DELAY = 0.85;
+  var SLIME_OPENING_SPLIT_DELAY = 0.5;
+  var AI_CONFIG3 = GAME_CONFIG.enemies.ai;
+  var DEFINITIONS = [
+    {
+      type: "chaser",
+      title: "Chaser",
+      badge: "Melee",
+      description: "Aggressive direct pursuit that pressures your movement.",
+      legend: "Green: player, white: enemy."
+    },
+    {
+      type: "slime",
+      title: "Slime",
+      badge: "Melee",
+      description: "Aggressive direct pursuit, splits into smaller slimes when killed.",
+      legend: "Takes a scripted hit after 0.5s to split once, then continues normal pursuit."
+    },
+    {
+      type: "shooter",
+      title: "Shooter",
+      badge: "Ranged",
+      description: "Maintains spacing and uses aimed shots.",
+      legend: "Orange dots: enemy bullets."
+    },
+    {
+      type: "assaultShooter",
+      title: "Assault Shooter",
+      badge: "Burst",
+      description: "Wave-style burst streams with lateral offsets.",
+      legend: "Orange dots: burst stream."
+    },
+    {
+      type: "shotgunShooter",
+      title: "Shotgun Shooter",
+      badge: "Spread",
+      description: "Short-range cone volleys with pellet spread.",
+      legend: "Orange dots: shotgun pellets."
+    },
+    {
+      type: "mortar",
+      title: "Mortar",
+      badge: "Telegraph",
+      description: "Telegraphs delayed impact zones before AoE hits.",
+      legend: "Red ring: detonation warning."
+    },
+    {
+      type: "bomber",
+      title: "Bomber",
+      badge: "Fuse",
+      description: "Rushes, primes, then detonates near the player.",
+      legend: "Pulse ring: blast radius."
+    },
+    {
+      type: "flyingBomber",
+      title: "Flying Bomber",
+      badge: "Flyby",
+      description: "Telegraphs a lane, then performs a bomb-dropping flyby.",
+      legend: "Dashed lane + arrows: attack path."
+    }
+  ];
+  function createMockState() {
+    const state = createInitialState();
+    state.running = true;
+    state.paused = false;
+    state.titleScreen = false;
+    state.gameOver = false;
+    state.player.x = 0;
+    state.player.y = 0;
+    state.player.aim.x = state.player.x + 120;
+    state.player.aim.y = state.player.y;
+    state.systems.world = createWorldSystem(1337);
+    return state;
+  }
+  function makeEnemy(type) {
+    if (type === "flyingBomber") {
+      const path = computeFlyingBomberPath({ x: 0, y: 0 }, { x: 0, y: 0 });
+      return createEnemy(type, path.fromX, path.fromY, DIFFICULTY, {
+        fromX: path.fromX,
+        fromY: path.fromY,
+        dirX: path.dirX,
+        dirY: path.dirY,
+        exitX: path.exitX,
+        exitY: path.exitY
+      });
+    }
+    return createEnemy(type, -190, 0, DIFFICULTY, type === "slime" ? { tier: 0 } : {});
+  }
+  function resetEnemyPosition(enemy, type) {
+    if (type === "flyingBomber") {
+      const path = computeFlyingBomberPath({ x: 0, y: 0 }, { x: 0, y: 0 });
+      enemy.x = path.fromX;
+      enemy.y = path.fromY;
+      enemy.flyFromX = path.fromX;
+      enemy.flyFromY = path.fromY;
+      enemy.flyDirX = path.dirX;
+      enemy.flyDirY = path.dirY;
+      enemy.flyExitX = path.exitX;
+      enemy.flyExitY = path.exitY;
+      enemy.flyPhase = "warning";
+      enemy.warningTimer = enemy.warningDuration;
+      enemy.distTraveled = 0;
+      enemy.bombDistAccum = 0;
+      enemy.isDone = false;
+      return;
+    }
+    const rx = (Math.random() * 2 - 1) * 52;
+    const ry = (Math.random() * 2 - 1) * 52;
+    enemy.x = -190 + rx;
+    enemy.y = ry;
+    enemy.offscreenTime = 0;
+    enemy.isRespawning = false;
+    enemy.isPrimed = false;
+    enemy.fuseTimer = enemy.fuseDuration || 0;
+  }
+  function createSimulation(type) {
+    const state = createMockState();
+    state.player.x = 0;
+    state.player.y = 0;
+    state.player.hp = PLAYER_MAX_HP;
+    state.player.maxHp = PLAYER_MAX_HP;
+    state.player.radius = 12;
+    const services = createGameServices({
+      gameState: state,
+      canvas,
+      documentRef: document,
+      isDebugMode: false
+    });
+    const renderer = createRenderer(canvas, state);
+    const enemy = makeEnemy(type);
+    state.enemies.push(enemy);
+    return {
+      type,
+      state,
+      services,
+      renderer,
+      player: state.player,
+      enemy,
+      enemyRespawnTimer: 0,
+      playerRespawnTimer: 0,
+      deaths: 0,
+      elapsed: 0,
+      slimeScript: type === "slime" ? {
+        phase: "opening-split",
+        splitEvents: 0,
+        openingSplitDone: false,
+        openingSplitDelay: SLIME_OPENING_SPLIT_DELAY
+      } : null
+    };
+  }
+  function resetSlimeScenario(sim) {
+    sim.state.projectiles.length = 0;
+    sim.state.indicators.length = 0;
+    sim.state.effects.length = 0;
+    sim.state.floatingTexts.length = 0;
+    sim.state.enemies.length = 0;
+    sim.enemyRespawnTimer = 0;
+    sim.enemy = makeEnemy("slime");
+    sim.state.enemies.push(sim.enemy);
+    sim.state.player.hp = sim.player.maxHp;
+    sim.state.player.x = sim.player.x;
+    sim.state.player.y = sim.player.y;
+    sim.slimeScript = {
+      phase: "opening-split",
+      splitEvents: 0,
+      openingSplitDone: false,
+      openingSplitDelay: SLIME_OPENING_SPLIT_DELAY
+    };
+  }
+  function respawnPlayer(sim) {
+    sim.player.hp = sim.player.maxHp;
+    sim.player.x = 0;
+    sim.player.y = 0;
+    sim.playerRespawnTimer = 0;
+    sim.state.player.hp = sim.player.hp;
+    sim.state.player.x = sim.player.x;
+    sim.state.player.y = sim.player.y;
+    if (sim.type === "slime") {
+      resetSlimeScenario(sim);
+      return;
+    }
+    if (!sim.enemy) {
+      const next = makeEnemy(sim.type);
+      sim.enemy = next;
+      sim.state.enemies.length = 0;
+      sim.state.enemies.push(next);
+    } else {
+      resetEnemyPosition(sim.enemy, sim.type);
+    }
+  }
+  function queueEnemyRespawn(sim, delay) {
+    sim.enemy = null;
+    sim.state.enemies.length = 0;
+    sim.enemyRespawnTimer = Math.max(sim.enemyRespawnTimer, delay);
+  }
+  function handlePlayerDamageFromContact(sim) {
+    if (sim.playerRespawnTimer > 0) {
+      return;
+    }
+    const enemies = sim.type === "slime" ? sim.state.enemies : sim.enemy ? [sim.enemy] : [];
+    let accumulatedContactDamage = 0;
+    for (let i = 0; i < enemies.length; i += 1) {
+      const enemy = enemies[i];
+      const dist = Math.hypot(enemy.x - sim.player.x, enemy.y - sim.player.y);
+      if (dist <= enemy.radius + sim.player.radius) {
+        const dps = Math.max(6, enemy.contactDamage || 10);
+        accumulatedContactDamage += dps * DT;
+      }
+    }
+    if (accumulatedContactDamage > 0) {
+      sim.player.hp -= accumulatedContactDamage;
+      spawnFloatingText(
+        sim.state,
+        `-${Math.max(1, Math.round(accumulatedContactDamage))}`,
+        sim.player.x,
+        sim.player.y - sim.player.radius - 8,
+        "255,142,150",
+        20,
+        "damage"
+      );
+      sim.state.screenFx.shake = Math.min(14, sim.state.screenFx.shake + 0.9);
+      sim.state.screenFx.damageFlash = Math.min(1, sim.state.screenFx.damageFlash + 0.06);
+    }
+  }
+  function splitSlimeEnemy(sim, enemy) {
+    const nextTier = (enemy.slimeTier || 0) + 1;
+    if (nextTier > (enemy.maxSlimeTier || 0)) {
+      return;
+    }
+    const count = enemy.splitCount || 2;
+    for (let i = 0; i < count; i += 1) {
+      const angle = Math.PI * 2 * i / count + Math.random() * 0.38;
+      const offset = 10 + Math.random() * 8;
+      const child = createEnemy("slime", enemy.x + Math.cos(angle) * offset, enemy.y + Math.sin(angle) * offset, DIFFICULTY, {
+        tier: nextTier
+      });
+      sim.state.enemies.push(child);
+    }
+  }
+  function updateSlimeScript(sim) {
+    if (sim.type !== "slime") {
+      return;
+    }
+    if (sim.playerRespawnTimer > 0 || !sim.slimeScript) {
+      return;
+    }
+    const script = sim.slimeScript;
+    if (!script.openingSplitDone) {
+      if (script.openingSplitDelay > 0) {
+        script.openingSplitDelay = Math.max(0, script.openingSplitDelay - DT);
+        script.phase = "opening-delay";
+        return;
+      }
+      const openingTarget = sim.state.enemies.find((enemy) => enemy.type === "slime" && (enemy.slimeTier || 0) === 0);
+      if (openingTarget) {
+        const scriptedDamage = Math.max(1, openingTarget.hp);
+        openingTarget.hp -= scriptedDamage;
+        sim.state.effects.push({
+          x: openingTarget.x,
+          y: openingTarget.y,
+          radius: Math.max(8, openingTarget.radius * 0.4),
+          elapsed: 0,
+          duration: 0.16,
+          growth: 18,
+          color: "255, 224, 170"
+        });
+        spawnFloatingText(
+          sim.state,
+          `-${Math.max(1, Math.round(scriptedDamage))}`,
+          openingTarget.x,
+          openingTarget.y - openingTarget.radius - 4,
+          "255,214,168",
+          21,
+          "damage"
+        );
+        sim.state.screenFx.shake = Math.min(14, sim.state.screenFx.shake + 0.7);
+        const index = sim.state.enemies.indexOf(openingTarget);
+        if (index >= 0 && openingTarget.hp <= 0) {
+          sim.state.enemies.splice(index, 1);
+        }
+        if (openingTarget.hp <= 0 && (openingTarget.slimeTier || 0) < (openingTarget.maxSlimeTier || 0)) {
+          splitSlimeEnemy(sim, openingTarget);
+          script.splitEvents += 1;
+        }
+      }
+      script.openingSplitDone = true;
+      script.phase = "active";
+      return;
+    }
+  }
+  function handleProjectileHits(sim) {
+    if (sim.playerRespawnTimer > 0) {
+      return;
+    }
+    let accumulatedProjectileDamage = 0;
+    for (let i = sim.state.projectiles.length - 1; i >= 0; i -= 1) {
+      const projectile = sim.state.projectiles[i];
+      const dist = Math.hypot(projectile.position.x - sim.player.x, projectile.position.y - sim.player.y);
+      const hitRadius = (projectile.radius || 4) + sim.player.radius;
+      if (dist <= hitRadius) {
+        accumulatedProjectileDamage += projectile.damage || 8;
+        sim.state.projectiles.splice(i, 1);
+      }
+    }
+    if (accumulatedProjectileDamage > 0) {
+      sim.player.hp -= accumulatedProjectileDamage;
+      spawnFloatingText(
+        sim.state,
+        `-${Math.max(1, Math.round(accumulatedProjectileDamage))}`,
+        sim.player.x,
+        sim.player.y - sim.player.radius - 8,
+        "255,142,150",
+        20,
+        "damage"
+      );
+      sim.state.screenFx.shake = Math.min(14, sim.state.screenFx.shake + 0.9);
+      sim.state.screenFx.damageFlash = Math.min(1, sim.state.screenFx.damageFlash + 0.06);
+    }
+  }
+  function updateEnemyBehavior(sim) {
+    const { state, type } = sim;
+    const player = state.player;
+    const enemy = sim.enemy;
+    if (!enemy && type !== "slime") {
+      return;
+    }
+    const world = state.systems.world;
+    const playerVelocity = { x: 0, y: 0 };
+    if (type === "slime") {
+      for (let i = 0; i < state.enemies.length; i += 1) {
+        updateChaserSlimeBehavior(state.enemies[i], player, world, DT, SPEED_MULT);
+      }
+    } else if (type === "chaser") {
+      updateChaserSlimeBehavior(enemy, player, world, DT, SPEED_MULT);
+    } else if (type === "shooter") {
+      updateShooterBehavior(state, enemy, player, world, DT, SPEED_MULT, playerVelocity);
+    } else if (type === "assaultShooter") {
+      updateAssaultShooterBehavior(state, enemy, player, world, DT, SPEED_MULT, playerVelocity);
+    } else if (type === "shotgunShooter") {
+      updateShotgunShooterBehavior(state, enemy, player, world, DT, SPEED_MULT, playerVelocity);
+    } else if (type === "mortar") {
+      updateMortarBehavior(state, enemy, player, world, DT, SPEED_MULT, []);
+    } else if (type === "bomber") {
+      updateBomberBehavior(state, enemy, 0, player, world, DT, SPEED_MULT);
+    } else if (type === "flyingBomber") {
+      updateFlyingBomberBehavior(state, enemy, player, DT);
+      if (enemy.isDone) {
+        resetEnemyPosition(enemy, type);
+      }
+    }
+    if (type === "bomber" && state.enemies[0] !== enemy) {
+      queueEnemyRespawn(sim, BOMBER_RESPAWN_DELAY);
+    }
+    if (type === "slime") {
+      for (let i = 0; i < state.enemies.length; i += 1) {
+        if (Math.abs(state.enemies[i].x) > 520 || Math.abs(state.enemies[i].y) > 340) {
+          resetEnemyPosition(state.enemies[i], "slime");
+        }
+      }
+      sim.enemy = state.enemies[0] || null;
+    } else if (type !== "flyingBomber" && enemy && (Math.abs(enemy.x) > 500 || Math.abs(enemy.y) > 320)) {
+      resetEnemyPosition(enemy, type);
+    }
+  }
+  function resolveEnemyCrowdingInShowcase(sim) {
+    const enemies = sim.state.enemies;
+    if (!enemies || enemies.length < 2) {
+      return;
+    }
+    const world = sim.state.systems.world;
+    const iterations = Math.max(1, AI_CONFIG3.enemySeparationIterations || 1);
+    const strength = Math.max(0, Math.min(1.5, AI_CONFIG3.enemySeparationStrength || 0.85));
+    const paddingFactor = Math.max(0.6, Math.min(1.2, AI_CONFIG3.enemySeparationPaddingFactor || 0.94));
+    for (let iteration = 0; iteration < iterations; iteration += 1) {
+      for (let i = 0; i < enemies.length; i += 1) {
+        const a = enemies[i];
+        if (!a || a.isRespawning || a.skipRecycle) {
+          continue;
+        }
+        for (let j = i + 1; j < enemies.length; j += 1) {
+          const b = enemies[j];
+          if (!b || b.isRespawning || b.skipRecycle) {
+            continue;
+          }
+          const minDistance = (a.radius + b.radius) * paddingFactor;
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq >= minDistance * minDistance) {
+            continue;
+          }
+          let nx;
+          let ny;
+          let dist = Math.sqrt(distSq);
+          if (dist < 1e-4) {
+            const angleSeed = ((i + 1) * 73856093 ^ (j + 1) * 19349663 ^ (iteration + 1) * 83492791) & 1023;
+            const angle = angleSeed / 1024 * Math.PI * 2;
+            nx = Math.cos(angle);
+            ny = Math.sin(angle);
+            dist = 0;
+          } else {
+            nx = dx / dist;
+            ny = dy / dist;
+          }
+          const overlap = minDistance - dist;
+          if (overlap <= 0) {
+            continue;
+          }
+          const push = overlap * 0.5 * strength;
+          a.x -= nx * push;
+          a.y -= ny * push;
+          b.x += nx * push;
+          b.y += ny * push;
+          const _world = world;
+          if (!_world) {
+            continue;
+          }
+        }
+      }
+    }
+  }
+  function updateProjectiles2(sim) {
+    updateProjectiles(sim.services, DT);
+  }
+  function updateIndicatorsAndEffects(sim) {
+    const triggered = updateIndicators(sim.state.indicators, DT);
+    for (let i = 0; i < triggered.length; i += 1) {
+      const indicator = triggered[i];
+      if (typeof indicator.onTrigger === "function") {
+        indicator.onTrigger();
+      }
+    }
+    updateSlashEffects(sim.state, DT);
+    updateEffects(sim.state, DT);
+    updateFloatingTexts(sim.state, DT);
+  }
+  function updateSimulation(sim) {
+    sim.elapsed += DT;
+    sim.state.time += DT;
+    updateSlimeScript(sim);
+    if (sim.playerRespawnTimer > 0) {
+      sim.playerRespawnTimer = Math.max(0, sim.playerRespawnTimer - DT);
+      if (sim.playerRespawnTimer <= 0) {
+        respawnPlayer(sim);
+      }
+      return;
+    }
+    if (!sim.enemy && sim.enemyRespawnTimer > 0) {
+      sim.enemyRespawnTimer = Math.max(0, sim.enemyRespawnTimer - DT);
+      if (sim.enemyRespawnTimer <= 0) {
+        const next = makeEnemy(sim.type);
+        sim.enemy = next;
+        sim.state.enemies.length = 0;
+        sim.state.enemies.push(next);
+      }
+    }
+    updateEnemyBehavior(sim);
+    resolveEnemyCrowdingInShowcase(sim);
+    updateProjectiles2(sim);
+    handleProjectileHits(sim);
+    handlePlayerDamageFromContact(sim);
+    updateIndicatorsAndEffects(sim);
+    if (sim.player.hp <= 0 && sim.playerRespawnTimer <= 0) {
+      sim.player.hp = 0;
+      sim.state.player.hp = 0;
+      sim.deaths += 1;
+      sim.playerRespawnTimer = PLAYER_RESPAWN_DELAY;
+      queueEnemyRespawn(sim, sim.type === "bomber" ? BOMBER_RESPAWN_DELAY : 0.15);
+    }
+  }
+  var canvas = document.getElementById("showcase-canvas");
+  var ctx = canvas.getContext("2d");
+  var picker = document.getElementById("enemy-picker");
+  var titleEl = document.getElementById("showcase-title");
+  var badgeEl = document.getElementById("showcase-badge");
+  var descEl = document.getElementById("showcase-description");
+  var legendEl = document.getElementById("showcase-legend");
+  var statsEl = document.getElementById("showcase-stats");
+  for (let i = 0; i < DEFINITIONS.length; i += 1) {
+    const def = DEFINITIONS[i];
+    const option = document.createElement("option");
+    option.value = def.type;
+    option.textContent = `${def.title} (${def.badge})`;
+    picker.appendChild(option);
+  }
+  var activeSim = createSimulation(DEFINITIONS[0].type);
+  function getDefinition(type) {
+    return DEFINITIONS.find((d) => d.type === type) || DEFINITIONS[0];
+  }
+  function getInitialEnemyTypeFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("enemy");
+    if (!requested) {
+      return DEFINITIONS[0].type;
+    }
+    return getDefinition(requested).type;
+  }
+  function setEnemyTypeInUrl(type) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("enemy", type);
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", nextUrl);
+  }
+  function syncMeta(type) {
+    const def = getDefinition(type);
+    titleEl.textContent = def.title;
+    badgeEl.textContent = def.badge;
+    descEl.textContent = def.description;
+    legendEl.textContent = def.legend;
+  }
+  var initialEnemyType = getInitialEnemyTypeFromUrl();
+  activeSim = createSimulation(initialEnemyType);
+  picker.value = activeSim.type;
+  syncMeta(activeSim.type);
+  setEnemyTypeInUrl(activeSim.type);
+  picker.addEventListener("change", () => {
+    const selectedType = getDefinition(picker.value).type;
+    activeSim = createSimulation(selectedType);
+    syncMeta(activeSim.type);
+    setEnemyTypeInUrl(activeSim.type);
+  });
+  function updateStats(sim) {
+    const enemyHp = sim.type === "slime" ? sim.state.enemies.length > 0 ? `${sim.state.enemies.length} active` : "respawning" : sim.enemy ? `${Math.round(sim.enemy.hp)}/${Math.round(sim.enemy.maxHp)}` : "respawning";
+    const enemyState = sim.enemy ? sim.type === "slime" ? sim.slimeScript?.phase || "active" : sim.type === "flyingBomber" ? sim.enemy.flyPhase : sim.type === "bomber" ? sim.enemy.isPrimed ? "primed" : "chasing" : "active" : "respawn-wait";
+    const items = [
+      `Player HP ${Math.round(sim.player.hp)}/${sim.player.maxHp}`,
+      `Enemy HP ${enemyHp}`,
+      `Enemy ${enemyState}`,
+      `Deaths ${sim.deaths}`
+    ];
+    if (sim.type === "slime") {
+      items.push(`Split Events ${sim.slimeScript?.splitEvents || 0}`);
+    }
+    if (!sim.enemy && sim.enemyRespawnTimer > 0) {
+      items.push(`Enemy Respawn ${sim.enemyRespawnTimer.toFixed(2)}s`);
+    }
+    if (sim.playerRespawnTimer > 0) {
+      items.push(`Player Respawn ${sim.playerRespawnTimer.toFixed(2)}s`);
+    }
+    statsEl.innerHTML = items.map((text) => `<span>${text}</span>`).join("");
+  }
+  function frame() {
+    updateSimulation(activeSim);
+    activeSim.renderer.render();
+    updateStats(activeSim);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Oxanium, Space_Grotesk } from "next/font/google";
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const displayFont = Oxanium({
@@ -13,10 +14,8 @@ const bodyFont = Space_Grotesk({
   weight: ["400", "500", "700"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
 export const metadata: Metadata = {
-  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "MathShield",
     template: "%s | MathShield",

@@ -466,6 +466,14 @@ a {
   border-bottom: 1px solid rgba(255, 248, 239, 0.08);
 }
 
+.game-frame-meta,
+.game-frame-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .frame-status {
   color: var(--muted);
 }
@@ -561,6 +569,13 @@ a {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   border: 1px solid rgba(255, 248, 239, 0.12);
+}
+
+.ui-button--small {
+  min-height: 40px;
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  box-shadow: none;
 }
 
 .home-badge {

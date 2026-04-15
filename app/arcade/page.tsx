@@ -33,10 +33,10 @@ export default function ArcadePage() {
       <section className="arcade-header">
         <div>
           <p className="section-kicker">Arcade Lab</p>
-          <h1 className="arcade-title">Combat + defense lineup</h1>
+          <h1 className="arcade-title">Curated imported lineup</h1>
           <p className="arcade-copy">
-            Imported HTML5 shooters, zombie survival games, bot fights, and tower defense maps only. Every card below
-            opens a real playable game.
+            Real imported HTML5 games only: cleaner combat, zombie pressure, tower defense, one-button driving, and a
+            proper futuristic racer. Every card below opens a playable build with instructions.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function ArcadePage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search shooters, zombies, and tower defense..."
+          placeholder="Search combat, racing, zombies, and tower defense..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

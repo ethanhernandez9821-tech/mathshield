@@ -35,8 +35,8 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open the action lineup fast.</h1>
             <p className="dashboard-copy">
-              Arcade Lab now leans into imported shooters, zombie pressure, bot combat, and tower defense. Math Lab
-              stays smaller and cleaner.
+              Arcade Lab now leans into better imported HTML5 games: cleaner shooters, zombie pressure, tower defense,
+              one-button drifting, and a real futuristic racer. Math Lab stays smaller and cleaner.
             </p>
 
             <div className="action-row">
@@ -55,8 +55,8 @@ export default function Home() {
           <div className="quick-grid">
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
-              <h2>Imported combat games</h2>
-              <p>Jump into bot shooters, zombie waves, mouse-aim survival runs, and tower defense maps without filler cards.</p>
+              <h2>Imported arcade games</h2>
+              <p>Jump into survival shooters, zombie waves, platform combat, tower defense, drifting, and a polished 3D racer.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
@@ -75,14 +75,14 @@ export default function Home() {
 
             <article className="info-card">
               <p className="section-kicker">Shooter Mix</p>
-              <h3>Crosshair + pressure</h3>
-              <p>The action side now centers on mouse-aim combat, survival loops, and cleaner imported arcade fights.</p>
+              <h3>Combat + movement</h3>
+              <p>The action side now mixes mouse-aim combat with platform movement and cleaner imported arcade pacing.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Defense Maps</p>
-              <h3>Tower defense is in</h3>
-              <p>Arcade Lab now includes live tower-defense and tower-control games instead of only small retro classics.</p>
+              <p className="section-kicker">Racing + Defense</p>
+              <h3>More range, less filler</h3>
+              <p>Arcade Lab now mixes tower defense with Drift Boss and HexGL so the lineup feels more like a real game hub.</p>
             </article>
           </div>
         </div>
@@ -114,10 +114,10 @@ export default function Home() {
 
           <section className="side-card">
             <p className="section-kicker">What Changed</p>
-            <h3>Arcade got sharper</h3>
+            <h3>Arcade got curated</h3>
             <p>
-              The arcade is shifting toward real imported action games, survival shooters, and defense-heavy picks
-              instead of the old retro filler.
+              The arcade is shifting toward stronger imported HTML5 games with menus, instructions, and real variety
+              instead of the weaker random imports.
             </p>
           </section>
         </aside>

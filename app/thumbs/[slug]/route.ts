@@ -86,6 +86,8 @@ export async function GET(_: Request, context: { params: Promise<{ slug: string 
       <text x="72" y="73" font-size="24" font-family="Arial, sans-serif" font-weight="700" fill="${theme.accent}">${escapeXml(
         game.category === "math" ? "Math Lab" : "Arcade Lab"
       )}</text>
+      <rect x="930" y="44" width="226" height="44" rx="22" fill="rgba(10,12,16,0.28)" stroke="rgba(255,255,255,0.2)"/>
+      <text x="968" y="73" font-size="24" font-family="Arial, sans-serif" font-weight="700" fill="${theme.accent}">MathShield</text>
       ${lineMarkup}
       <text x="44" y="560" font-size="26" font-family="Arial, sans-serif" fill="rgba(255,255,255,0.88)">${escapeXml(
         game.status === "live" ? "Playable now in MathShield" : "Catalog card ready"

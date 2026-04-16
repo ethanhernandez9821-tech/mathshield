@@ -70,7 +70,7 @@ export const games: Game[] = [
   {
     slug: "three-fps",
     title: "Three FPS",
-    description: "A full 3D FPS import with NPC enemies, ammo boxes, pointer-lock aim, sprinting, jumping, and a real game-start menu.",
+    description: "A rebuilt 3D FPS import with one-minute waves, map voting, tracers, enemy health bars, sliding, gun swaps, and upgrade picks between rounds.",
     category: "arcade",
     thumbnail: "/thumbs/three-fps",
     status: "live",

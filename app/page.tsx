@@ -35,8 +35,8 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open the action lineup fast.</h1>
             <p className="dashboard-copy">
-              Arcade Lab now leans into better imported HTML5 games: cleaner shooters, parkour-combat, one-button
-              drifting, and a real futuristic racer. Math Lab stays smaller and cleaner.
+              Arcade Lab now leans into better imported HTML5 games: more real shooters, a legit basketball break,
+              movement-combat, one-button drifting, and a real futuristic racer. Math Lab stays smaller and cleaner.
             </p>
 
             <div className="action-row">
@@ -56,7 +56,7 @@ export default function Home() {
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
               <h2>Imported arcade games</h2>
-              <p>Jump into survival shooters, arena fights, platform combat, drifting, and a polished 3D racer.</p>
+              <p>Jump into survival shooters, space shooters, platform combat, basketball, drifting, and a polished 3D racer.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
@@ -75,14 +75,14 @@ export default function Home() {
 
             <article className="info-card">
               <p className="section-kicker">Shooter Mix</p>
-              <h3>Combat + movement</h3>
-              <p>The action side now mixes mouse-aim combat with platform movement and cleaner imported arcade pacing.</p>
+              <h3>Combat + range</h3>
+              <p>The action side now mixes arena fights, survival shooters, space shooters, and platform combat.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Racing + Range</p>
+              <p className="section-kicker">Sports + Racing</p>
               <h3>More range, less filler</h3>
-              <p>Arcade Lab now mixes shooters with Drift Boss and HexGL so the lineup feels more like a real game hub.</p>
+              <p>Arcade Lab now mixes shooters with basketball, Drift Boss, and HexGL so the lineup feels more like a real game hub.</p>
             </article>
           </div>
         </div>
@@ -116,8 +116,8 @@ export default function Home() {
             <p className="section-kicker">What Changed</p>
             <h3>Arcade got curated</h3>
             <p>
-              The arcade is shifting toward stronger imported HTML5 games with menus, instructions, and real variety
-              instead of the weaker random imports.
+              The arcade is shifting toward stronger imported HTML5 games with menus, instructions, and more real
+              variety instead of weak filler.
             </p>
           </section>
         </aside>

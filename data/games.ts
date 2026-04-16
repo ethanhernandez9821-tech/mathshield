@@ -77,15 +77,6 @@ export const games: Game[] = [
     theme: "rose",
   },
   {
-    slug: "shooter-game-3d",
-    title: "Shooter Game 3D",
-    description: "A lighter Three.js FPS with a start screen, crosshair aim, jump and sprint controls, and instant pointer-lock gunplay.",
-    category: "arcade",
-    thumbnail: "/thumbnails/shooter-game-3d.jpg",
-    status: "live",
-    theme: "orange",
-  },
-  {
     slug: "n-gon",
     title: "n-gon",
     description: "A physics-heavy platform combat game with built-in settings, controls, training, and the closest legit parkour-combat vibe in the lineup.",

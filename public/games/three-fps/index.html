@@ -89,17 +89,39 @@
       }
       .control-grid{
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-        gap: 0.9rem;
+        grid-template-columns: 1.15fr 0.95fr;
+        gap: 1rem;
         margin-top: 1.5rem;
       }
-      .control-card{
-        padding: 0.9rem 1rem;
+      .tutorial-panel,
+      .tutorial-step{
+        padding: 1rem 1.05rem;
         border-radius: 1rem;
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.06);
       }
-      .control-card strong{
+      .tutorial-panel{
+        display: grid;
+        gap: 0.75rem;
+      }
+      .tutorial-step{
+        display: grid;
+        grid-template-columns: 2.3rem 1fr;
+        gap: 0.8rem;
+        align-items: start;
+      }
+      .step-number{
+        display: grid;
+        place-items: center;
+        width: 2.3rem;
+        height: 2.3rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(88, 220, 255, 0.2), rgba(255, 158, 71, 0.22));
+        color: var(--text);
+        font-weight: 800;
+      }
+      .step-copy strong,
+      .tutorial-panel strong{
         display: block;
         margin-bottom: 0.2rem;
         font-size: 0.86rem;
@@ -107,7 +129,22 @@
         text-transform: uppercase;
         color: var(--accent);
       }
-      .control-card span{
+      .step-copy span,
+      .tutorial-panel span{
+        color: var(--text);
+        line-height: 1.5;
+      }
+      .key-row{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+      }
+      .keycap{
+        padding: 0.38rem 0.64rem;
+        border-radius: 0.7rem;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.08);
+        font-size: 0.82rem;
         color: var(--text);
       }
       #start_game{
@@ -368,6 +405,73 @@
         text-align: left;
         cursor: pointer;
       }
+      .choice-card__thumb{
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        min-height: 5rem;
+        margin-bottom: 0.75rem;
+        padding: 0.6rem;
+        border-radius: 0.9rem;
+        background: linear-gradient(135deg, rgba(88,220,255,0.18), rgba(17,23,38,0.85));
+        border: 1px solid rgba(255,255,255,0.08);
+        overflow: hidden;
+      }
+      .choice-card__icon{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 3.1rem;
+        height: 2rem;
+        padding: 0 0.55rem;
+        border-radius: 999px;
+        background: rgba(2, 6, 14, 0.65);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: var(--text);
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .choice-card__thumb--map-neon{
+        background:
+          linear-gradient(145deg, rgba(88,220,255,0.25), rgba(7,14,24,0.88)),
+          radial-gradient(circle at 25% 25%, rgba(88,220,255,0.8), transparent 30%);
+      }
+      .choice-card__thumb--map-amber{
+        background:
+          linear-gradient(145deg, rgba(255,149,64,0.28), rgba(25,11,5,0.88)),
+          radial-gradient(circle at 70% 30%, rgba(255,210,120,0.7), transparent 32%);
+      }
+      .choice-card__thumb--map-midnight{
+        background:
+          linear-gradient(145deg, rgba(211,108,255,0.28), rgba(14,7,24,0.88)),
+          radial-gradient(circle at 20% 70%, rgba(160,96,255,0.72), transparent 32%);
+      }
+      .choice-card__thumb--perk-damage{
+        background: linear-gradient(145deg, rgba(255,94,122,0.3), rgba(39,10,18,0.9));
+      }
+      .choice-card__thumb--perk-rapid{
+        background: linear-gradient(145deg, rgba(255,168,76,0.28), rgba(37,17,4,0.92));
+      }
+      .choice-card__thumb--perk-ammo{
+        background: linear-gradient(145deg, rgba(126,208,255,0.25), rgba(6,20,32,0.92));
+      }
+      .choice-card__thumb--perk-mobility{
+        background: linear-gradient(145deg, rgba(124,255,196,0.25), rgba(4,24,18,0.92));
+      }
+      .choice-card__thumb--perk-health{
+        background: linear-gradient(145deg, rgba(255,109,151,0.25), rgba(35,6,19,0.92));
+      }
+      .choice-card__thumb--gun-ranger{
+        background: linear-gradient(145deg, rgba(88,220,255,0.22), rgba(8,16,25,0.92));
+      }
+      .choice-card__thumb--gun-viper{
+        background: linear-gradient(145deg, rgba(255,173,76,0.24), rgba(17,13,6,0.92));
+      }
+      .choice-card__thumb--gun-titan{
+        background: linear-gradient(145deg, rgba(255,93,143,0.24), rgba(24,8,18,0.92));
+      }
       .choice-card.is-selected{
         border-color: rgba(88, 220, 255, 0.42);
         box-shadow: 0 0 0 1px rgba(88, 220, 255, 0.3) inset;
@@ -409,6 +513,9 @@
         cursor: pointer;
       }
       @media (max-width: 900px){
+        .control-grid{
+          grid-template-columns: 1fr;
+        }
         .hud-top{
           grid-template-columns: 1fr;
         }
@@ -419,4 +526,4 @@
         .health-shell{
           width: 100%;
         }
-      }</style></head><body><div id="menu"><div class="menu-card"><span class="menu-kicker">MathShield / imported FPS</span><h1>Three FPS: Uprising</h1><p class="menu-copy">Vote on the next arena, switch loadouts, earn upgrades every wave, and survive one-minute combat rounds that keep scaling harder.</p><div class="control-grid"><div class="control-card"><strong>WASD</strong><span>Move</span></div><div class="control-card"><strong>Shift + C</strong><span>Sprint and slide</span></div><div class="control-card"><strong>Mouse</strong><span>Aim + fire</span></div><div class="control-card"><strong>1 / 2 / 3</strong><span>Swap guns</span></div><div class="control-card"><strong>R</strong><span>Reload</span></div><div class="control-card"><strong>Space</strong><span>Jump</span></div></div><button id="start_game">Start run</button><div id="progress_shell"><div id="progress"></div></div></div></div><div id="game_hud"><div class="hud-top"><div class="hud-cluster"><div class="hud-panel"><span class="hud-label">Wave status</span><div class="hud-stats"><div><span class="hud-label">Wave</span> <span class="hud-value" id="wave_value">1</span></div><div><span class="hud-label">Time</span> <span class="hud-value" id="timer_value">1:00</span></div><div><span class="hud-label">Map</span> <span class="hud-value" id="map_value">Neon Docks</span></div><div><span class="hud-label">Hostiles</span> <span class="hud-value" id="enemy_value">0</span></div></div></div><div class="hud-panel weapon-panel"><span class="hud-label">Loadout</span> <strong id="weapon_name">Ranger AR</strong> <small id="weapon_meta">18 dmg • 9.1 rps • 30 mag</small><ul class="perk-list" id="perk_list"></ul></div></div></div><div id="crosshair"><span></span></div><div id="center_message"></div><div id="enemy_bars"></div><div class="hud-bottom"><div class="status-stack"><div class="hud-panel"><div class="health-meta"><div><span class="hud-label">Health</span> <span class="hud-value"><span id="health_value">100</span> / <span id="health_max">100</span></span></div></div><div class="health-shell"><div id="health_progress"></div></div></div></div><div class="hud-panel ammo-chip"><span class="hud-label">Ammo</span> <strong><span id="current_ammo">0</span> <span style="opacity:0.4;">/</span> <span id="max_ammo">0</span></strong></div></div><div id="intermission"><div class="intermission-card"><span class="menu-kicker">Intermission</span><h2 id="intermission_title">Vote the first arena</h2><p class="menu-copy" id="intermission_subtitle">Pick a map, a gun, and an upgrade before the next drop.</p><section class="choice-section"><span class="hud-label">Map vote</span><div class="choice-grid" id="map_vote_choices"></div></section><section class="choice-section"><span class="hud-label">Upgrade pick</span><div class="choice-grid" id="upgrade_choices"></div></section><section class="choice-section"><span class="hud-label">Loadout</span><div class="choice-grid" id="weapon_choices"></div></section><button id="continue_wave">Drop in</button></div></div></div><my-app></my-app><script src="main.494b486dc4e57efb5bfb.js"></script></body></html>
+      }</style></head><body><div id="menu"><div class="menu-card"><span class="menu-kicker">MathShield / imported FPS</span><h1>Three FPS: Uprising</h1><p class="menu-copy">Vote on the next arena, switch loadouts, earn upgrades every wave, and survive one-minute combat rounds that keep scaling harder.</p><div class="control-grid"><div class="tutorial-panel"><strong>How the run works</strong><div class="tutorial-step"><span class="step-number">1</span><div class="step-copy"><strong>Start hot</strong> <span>Wave 1 starts right away. Survive the full minute or wipe the room early.</span></div></div><div class="tutorial-step"><span class="step-number">2</span><div class="step-copy"><strong>Earn the vote screen</strong> <span>Only after a wave ends do you get to vote a new arena, pick one upgrade, and change guns.</span></div></div><div class="tutorial-step"><span class="step-number">3</span><div class="step-copy"><strong>Scale the build</strong> <span>Later waves unlock stronger loadouts and tougher mutant pressure, so your picks start to matter.</span></div></div></div><div class="tutorial-panel"><strong>Core controls</strong><div class="key-row"><span class="keycap">WASD Move</span> <span class="keycap">Mouse Aim / Shoot</span> <span class="keycap">Shift Sprint</span> <span class="keycap">C Slide</span> <span class="keycap">Space Jump</span> <span class="keycap">R Reload</span> <span class="keycap">1 / 2 / 3 Guns</span></div><span>Click once in the arena to lock the mouse. If you get dropped, the run resets and you rebuild from Wave 1.</span></div></div><button id="start_game">Start run</button><div id="progress_shell"><div id="progress"></div></div></div></div><div id="game_hud"><div class="hud-top"><div class="hud-cluster"><div class="hud-panel"><span class="hud-label">Wave status</span><div class="hud-stats"><div><span class="hud-label">Wave</span> <span class="hud-value" id="wave_value">1</span></div><div><span class="hud-label">Time</span> <span class="hud-value" id="timer_value">1:00</span></div><div><span class="hud-label">Map</span> <span class="hud-value" id="map_value">Neon Docks</span></div><div><span class="hud-label">Hostiles</span> <span class="hud-value" id="enemy_value">0</span></div></div></div><div class="hud-panel weapon-panel"><span class="hud-label">Loadout</span> <strong id="weapon_name">Ranger AR</strong> <small id="weapon_meta">18 dmg • 9.1 rps • 30 mag</small><ul class="perk-list" id="perk_list"></ul></div></div></div><div id="crosshair"><span></span></div><div id="center_message"></div><div id="enemy_bars"></div><div class="hud-bottom"><div class="status-stack"><div class="hud-panel"><div class="health-meta"><div><span class="hud-label">Health</span> <span class="hud-value"><span id="health_value">100</span> / <span id="health_max">100</span></span></div></div><div class="health-shell"><div id="health_progress"></div></div></div></div><div class="hud-panel ammo-chip"><span class="hud-label">Ammo</span> <strong><span id="current_ammo">0</span> <span style="opacity:0.4;">/</span> <span id="max_ammo">0</span></strong></div></div><div id="intermission"><div class="intermission-card"><span class="menu-kicker">Intermission</span><h2 id="intermission_title">Vote the first arena</h2><p class="menu-copy" id="intermission_subtitle">Pick a map, a gun, and an upgrade before the next drop.</p><section class="choice-section"><span class="hud-label">Map vote</span><div class="choice-grid" id="map_vote_choices"></div></section><section class="choice-section"><span class="hud-label">Upgrade pick</span><div class="choice-grid" id="upgrade_choices"></div></section><section class="choice-section"><span class="hud-label">Loadout</span><div class="choice-grid" id="weapon_choices"></div></section><button id="continue_wave">Drop in</button></div></div></div><my-app></my-app><script src="main.de382849aba1ac8dd22c.js"></script></body></html>

@@ -33,10 +33,9 @@ export default function Home() {
         <div className="dashboard-stack">
           <section className="welcome-panel">
             <p className="section-kicker">Quick Start</p>
-            <h1 className="dashboard-title">Open the action lineup fast.</h1>
+            <h1 className="dashboard-title">Open a game fast.</h1>
             <p className="dashboard-copy">
-              Arcade Lab now leans into better imported HTML5 games: more real shooters, full 3D FPS imports,
-              movement-combat, one-button drifting, and a real futuristic racer. Math Lab stays smaller and cleaner.
+              Arcade Lab is focused on real imported shooters and racers. Math Lab stays smaller.
             </p>
 
             <div className="action-row">
@@ -55,14 +54,14 @@ export default function Home() {
           <div className="quick-grid">
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
-              <h2>Imported arcade games</h2>
-              <p>Jump into survival shooters, 3D FPS imports, space shooters, platform combat, drifting, and a polished 3D racer.</p>
+              <h2>Arcade games</h2>
+              <p>FPS games, shooters, racers, and quick skill games.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
               <p className="section-kicker">Math Lab</p>
-              <h2>Imported math games</h2>
-              <p>Math Lab stays clean and only lists real imported puzzle games like 2048.</p>
+              <h2>Math games</h2>
+              <p>Real imported puzzle games like 2048.</p>
             </Link>
           </div>
 
@@ -70,19 +69,19 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>The featured arcade pick rotates once per day across the live imported lineup.</p>
+              <p>The featured pick changes once a day.</p>
             </article>
 
             <article className="info-card">
               <p className="section-kicker">Shooter Mix</p>
-              <h3>Combat + range</h3>
-              <p>The action side now mixes arena fights, survival shooters, space shooters, and platform combat.</p>
+              <h3>FPS + action</h3>
+              <p>The arcade now leans harder into shooters and faster action games.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Racing + Range</p>
-              <h3>More range, less filler</h3>
-              <p>Arcade Lab now mixes shooters with Drift Boss and HexGL so the lineup feels more like a real game hub.</p>
+              <p className="section-kicker">Racing</p>
+              <h3>Arcade speed</h3>
+              <p>Racing picks are grouped in with the shooters instead of filler imports.</p>
             </article>
           </div>
         </div>
@@ -114,11 +113,8 @@ export default function Home() {
 
           <section className="side-card">
             <p className="section-kicker">What Changed</p>
-            <h3>Arcade got curated</h3>
-            <p>
-              The arcade is shifting toward stronger imported HTML5 games with menus, instructions, and more real
-              variety instead of weak filler.
-            </p>
+            <h3>Arcade update</h3>
+            <p>The lineup is being cleaned up around stronger imported shooters and racers.</p>
           </section>
         </aside>
       </section>

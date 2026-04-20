@@ -33,11 +33,9 @@ export default function ArcadePage() {
       <section className="arcade-header">
         <div>
           <p className="section-kicker">Arcade Lab</p>
-          <h1 className="arcade-title">Curated imported lineup</h1>
+          <h1 className="arcade-title">Shooters and racers</h1>
           <p className="arcade-copy">
-            Real imported HTML5 games only: arena shooters, survival shooters, full 3D FPS imports, space shooters,
-            movement-combat, one-button driving, and a proper futuristic racer. Every card below opens a playable build
-            with instructions.
+            Real imported HTML5 games only. FPS games, shooters, racers, and skill games with art and controls on each page.
           </p>
         </div>
 
@@ -62,7 +60,7 @@ export default function ArcadePage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search shooters, FPS games, racing, and movement..."
+          placeholder="Search shooters and racing games..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

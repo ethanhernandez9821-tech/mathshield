@@ -457,6 +457,39 @@ a {
   overflow: hidden;
 }
 
+.game-launch {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 40%),
+    #090b0f;
+}
+
+.game-launch-media {
+  min-height: 260px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 248, 239, 0.08);
+  background-position: center;
+  background-size: cover;
+}
+
+.game-launch-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.game-launch-copy h2 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 2rem;
+}
+
+.game-launch-copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .game-frame-top {
   display: flex;
   justify-content: space-between;

@@ -31,7 +31,7 @@ export default function GameCard({
         <div className="poster-topline">
           <span className="poster-chip">{category}</span>
           <span className={`poster-action ${status === "live" ? "poster-action--live" : ""}`}>
-            {status === "live" ? "Play now" : "Coming soon"}
+            {status === "live" ? "Play" : "Soon"}
           </span>
         </div>
         <h2 className="poster-title">{title}</h2>

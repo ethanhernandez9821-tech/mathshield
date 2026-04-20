@@ -30,9 +30,7 @@ export default function GamesPage() {
         <div>
           <p className="section-kicker">Math Lab</p>
           <h1 className="arcade-title">Math lab games</h1>
-          <p className="arcade-copy">
-            Math Lab only shows real imported puzzle games too. Right now the live math import is 2048.
-          </p>
+          <p className="arcade-copy">Math Lab only shows real imported puzzle games. Right now the live math game is 2048.</p>
         </div>
       </section>
 

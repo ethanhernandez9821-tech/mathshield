@@ -3,17 +3,20 @@ import ImportedGamePage from "@/components/ImportedGamePage";
 export default function ThreeFpsPage() {
   return (
     <ImportedGamePage
-      badge="Imported 3D FPS"
+      badge="3D FPS"
       title="Three FPS"
-      description="A real 3D FPS import that now runs one-minute waves with map voting, loadout switching, tracers, enemy health bars, sliding, and upgrade picks between rounds."
+      description="Wave FPS with map votes, loadouts, and upgrades."
       src="/games/three-fps/index.html"
       license="MIT licensed"
       slug="three-fps"
-      howToPlay="Start the run from the built-in menu, vote on a map, click into the game to lock the mouse, move with WASD, fire with left click, sprint with Shift, slide with C, jump with Space, reload with R, and swap unlocked guns with 1, 2, and 3 between waves."
+      howToPlay="Press play to load it, then click into the game to lock the mouse. Use WASD to move, left click to shoot, Shift to sprint, C to slide, Space to jump, R to reload, and 1 to 3 to swap guns."
       tags={["3D FPS", "Wave system", "Crosshair aim"]}
-      sourceNote="Source: Mohsen Heydari's three-fps demo, rebuilt here from its MIT-licensed browser source and customized inside MathShield with new waves, UI, map voting, and combat feel changes."
+      sourceNote="Mohsen Heydari's three-fps demo, rebuilt here from its MIT browser source."
       openHref="/games/three-fps/index.html"
       restartLabel="Back to menu"
+      deferLoad
+      previewImage="/thumbs/three-fps"
+      loadLabel="Load FPS"
       crosshair
     />
   );

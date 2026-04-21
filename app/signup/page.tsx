@@ -34,7 +34,7 @@ export default function SignupPage() {
           <p className="section-kicker">Create Your Profile</p>
           <h1 className="arcade-title">Join the lab board.</h1>
           <p className="arcade-copy">
-            Create an account to unlock XP, saved play time, and a default MathShield profile card.
+            Create a saved browser account to unlock XP, saved play time, and a default MathShield profile card.
           </p>
         </div>
 

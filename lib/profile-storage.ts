@@ -159,19 +159,23 @@ export function signUpUser({
 
 export function loginUser({
   email,
+  identifier,
   password,
 }: {
-  email: string;
+  email?: string;
+  identifier?: string;
   password: string;
 }) {
-  const cleanEmail = email.trim().toLowerCase();
+  const cleanIdentifier = (identifier ?? email ?? "").trim().toLowerCase();
   const cleanPassword = password.trim();
   const user = readUsers().find(
-    (entry) => entry.email === cleanEmail && entry.password === cleanPassword
+    (entry) =>
+      (entry.email === cleanIdentifier || normalizeUsername(entry.username) === cleanIdentifier) &&
+      entry.password === cleanPassword
   );
 
   if (!user) {
-    return { ok: false as const, error: "That login does not match a saved account." };
+    return { ok: false as const, error: "That username/email and password do not match a saved account." };
   }
 
   setSessionEmail(user.email);

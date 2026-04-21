@@ -7,13 +7,13 @@ import { loginUser } from "@/lib/profile-storage";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = loginUser({ email, password });
+    const result = loginUser({ identifier, password });
 
     if (!result.ok) {
       setError(result.error);
@@ -38,16 +38,16 @@ export default function LoginPage() {
         </div>
 
         <form className="auth-card" onSubmit={handleSubmit}>
-          <label className="field-label" htmlFor="login-email">
-            Email
+          <label className="field-label" htmlFor="login-identifier">
+            Username or email
           </label>
           <input
-            id="login-email"
+            id="login-identifier"
             className="ui-input"
-            type="email"
-            placeholder="name@example.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            type="text"
+            placeholder="username or name@example.com"
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
           />
 
           <label className="field-label" htmlFor="login-password">

@@ -11,7 +11,7 @@ export default function Home() {
       <header className="site-header">
         <Link href="/" className="brand-lockup">
           <span className="brand-mini">MathShield</span>
-          <span className="brand-sub">Arcade + Math Lab</span>
+          <span className="brand-sub">Student Learning Hub</span>
         </Link>
 
         <nav className="primary-nav">
@@ -35,7 +35,7 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open a game fast.</h1>
             <p className="dashboard-copy">
-              Arcade Lab is focused on real imported shooters and racers. Math Lab stays smaller.
+              MathShield is built for students: quick learning games now, more math and study tools coming next.
             </p>
 
             <div className="action-row">
@@ -55,13 +55,13 @@ export default function Home() {
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
               <h2>Arcade games</h2>
-              <p>FPS games, shooters, racers, and quick skill games.</p>
+              <p>Skill games for reaction time, focus, and problem solving.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
               <p className="section-kicker">Math Lab</p>
               <h2>Math games</h2>
-              <p>Real imported puzzle games like 2048.</p>
+              <p>Math practice and logic games for actual study breaks.</p>
             </Link>
           </div>
 
@@ -69,19 +69,19 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>The featured pick changes once a day.</p>
+              <p>A rotating pick from the student game library.</p>
             </article>
 
             <article className="info-card">
               <p className="section-kicker">Shooter Mix</p>
               <h3>FPS + action</h3>
-              <p>The arcade now leans harder into shooters and faster action games.</p>
+              <p>Action games stay separate from the future learning section.</p>
             </article>
 
             <article className="info-card">
               <p className="section-kicker">Racing</p>
               <h3>Arcade speed</h3>
-              <p>Racing picks are grouped in with the shooters instead of filler imports.</p>
+              <p>More educational games and math tools are planned.</p>
             </article>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function Home() {
           <section className="side-card">
             <p className="section-kicker">What Changed</p>
             <h3>Arcade update</h3>
-            <p>The lineup is being cleaned up around stronger imported shooters and racers.</p>
+            <p>MathShield is being shaped as a student hub first, with games organized by purpose.</p>
           </section>
         </aside>
       </section>

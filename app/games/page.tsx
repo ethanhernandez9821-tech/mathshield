@@ -30,7 +30,9 @@ export default function GamesPage() {
         <div>
           <p className="section-kicker">Math Lab</p>
           <h1 className="arcade-title">Math lab games</h1>
-          <p className="arcade-copy">Math Lab only shows real imported puzzle games. Right now the live math game is 2048.</p>
+          <p className="arcade-copy">
+            Math Lab is the learning side of MathShield. It starts with 2048 and will grow into math drills, logic games, and study tools.
+          </p>
         </div>
       </section>
 

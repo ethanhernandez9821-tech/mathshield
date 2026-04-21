@@ -20,19 +20,19 @@ export const metadata: Metadata = {
     default: "MathShield",
     template: "%s | MathShield",
   },
-  description: "Math games, arcade challenges, player XP, and a clean student-friendly hub.",
+  description: "A student learning hub with math practice, logic games, educational tools, and safe browser challenges.",
   applicationName: "MathShield",
-  keywords: ["math games", "arcade games", "browser games", "study hub", "mathshield"],
+  keywords: ["math games", "educational games", "student learning", "logic games", "study hub", "mathshield"],
   openGraph: {
     title: "MathShield",
-    description: "Math games, arcade challenges, player XP, and a clean student-friendly hub.",
+    description: "A student learning hub with math practice, logic games, educational tools, and safe browser challenges.",
     siteName: "MathShield",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "MathShield",
-    description: "Math games, arcade challenges, player XP, and a clean student-friendly hub.",
+    description: "A student learning hub with math practice, logic games, educational tools, and safe browser challenges.",
   },
 };
 

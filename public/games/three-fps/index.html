@@ -1,15 +1,14 @@
 <!doctype html><html><head><meta charset="UTF-8"><title>Three FPS: Uprising | MathShield</title><style>:root{
         color-scheme: dark;
-        --bg: #06080f;
-        --panel: rgba(11, 16, 28, 0.88);
-        --panel-border: rgba(142, 216, 255, 0.16);
-        --panel-soft: rgba(16, 24, 40, 0.72);
-        --text: #eef3ff;
-        --muted: #9fb1c9;
-        --accent: #58dcff;
-        --accent-warm: #ff9e47;
-        --danger: #ff5b72;
-        --success: #86ffb1;
+        --bg: #05070a;
+        --panel: rgba(3, 8, 13, 0.62);
+        --panel-border: rgba(107, 239, 255, 0.22);
+        --text: #f4fbff;
+        --muted: #91a5b7;
+        --accent: #62f3ff;
+        --accent-warm: #ffb24d;
+        --danger: #ff4d68;
+        --success: #8cffb4;
       }
       *{
         box-sizing: border-box;
@@ -46,8 +45,9 @@
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(circle at top, rgba(88, 220, 255, 0.18), transparent 38%),
-          linear-gradient(135deg, #05070d, #111827 60%, #090c13);
+          radial-gradient(circle at 20% 15%, rgba(98, 243, 255, 0.18), transparent 30%),
+          radial-gradient(circle at 80% 85%, rgba(255, 178, 77, 0.12), transparent 34%),
+          linear-gradient(135deg, #030507, #0b1016 58%, #05080b);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -56,12 +56,14 @@
         z-index: 10;
       }
       .menu-card{
-        width: min(58rem, 100%);
-        border-radius: 1.8rem;
+        width: min(56rem, 100%);
+        border-radius: 0.7rem 2.2rem 0.7rem 1.5rem;
         border: 1px solid var(--panel-border);
-        background: linear-gradient(180deg, rgba(9, 14, 25, 0.95), rgba(10, 16, 28, 0.84));
-        box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-        padding: 2rem;
+        background:
+          linear-gradient(90deg, rgba(98,243,255,0.08), transparent 35%),
+          linear-gradient(180deg, rgba(6, 11, 16, 0.96), rgba(8, 13, 18, 0.86));
+        box-shadow: 0 22px 70px rgba(0,0,0,0.5);
+        padding: 1.65rem;
       }
       .menu-kicker{
         display: inline-flex;
@@ -77,7 +79,7 @@
       }
       h1{
         margin: 0;
-        font-size: clamp(2.2rem, 5vw, 4.6rem);
+        font-size: clamp(2.1rem, 4.7vw, 4.3rem);
         line-height: 0.95;
         letter-spacing: -0.04em;
       }
@@ -90,13 +92,13 @@
       .control-grid{
         display: grid;
         grid-template-columns: 1.15fr 0.95fr;
-        gap: 1rem;
-        margin-top: 1.5rem;
+        gap: 0.85rem;
+        margin-top: 1.2rem;
       }
       .tutorial-panel,
       .tutorial-step{
         padding: 1rem 1.05rem;
-        border-radius: 1rem;
+        border-radius: 0.85rem;
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.06);
       }
@@ -167,53 +169,56 @@
       }
       .hud-top{
         position: absolute;
-        top: 1.5rem;
-        left: 1.5rem;
-        right: 1.5rem;
-        display: grid;
-        grid-template-columns: 1.3fr 1fr;
-        gap: 1rem;
+        top: 0.9rem;
+        left: 0.9rem;
+        right: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.65rem;
         pointer-events: none;
       }
       .hud-cluster{
-        display: grid;
-        gap: 0.7rem;
+        display: contents;
       }
       .hud-panel{
-        padding: 0.95rem 1rem;
-        border-radius: 1rem;
+        padding: 0.56rem 0.7rem;
+        border-radius: 0.55rem 1rem 0.55rem 0.55rem;
         background: var(--panel);
         border: 1px solid var(--panel-border);
-        box-shadow: 0 18px 40px rgba(0,0,0,0.22);
-        backdrop-filter: blur(14px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.24);
+        backdrop-filter: blur(8px);
       }
       .hud-label{
         display: block;
         color: var(--muted);
-        font-size: 0.72rem;
-        letter-spacing: 0.12em;
+        font-size: 0.56rem;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
       }
       .hud-value{
         display: block;
-        font-size: 1.25rem;
+        font-size: 1rem;
         font-weight: 700;
       }
       .hud-stats{
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.65rem;
+        display: flex;
+        gap: 0.9rem;
+        white-space: nowrap;
+      }
+      .hud-stats > div:nth-child(3){
+        display: none;
       }
       .weapon-panel strong{
         display: block;
-        font-size: 1.2rem;
+        font-size: 0.95rem;
       }
       .weapon-panel small{
         color: var(--muted);
-        font-size: 0.92rem;
+        font-size: 0.72rem;
       }
       .perk-list{
-        display: flex;
+        display: none;
         flex-wrap: wrap;
         gap: 0.45rem;
         list-style: none;
@@ -235,9 +240,9 @@
       }
       .hud-bottom{
         position: absolute;
-        left: 1.5rem;
-        right: 1.5rem;
-        bottom: 1.5rem;
+        left: 0.9rem;
+        right: 0.9rem;
+        bottom: 0.9rem;
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
@@ -249,8 +254,8 @@
         gap: 0.75rem;
       }
       .health-shell{
-        width: min(24rem, 42vw);
-        height: 1rem;
+        width: min(18rem, 34vw);
+        height: 0.58rem;
         border-radius: 999px;
         overflow: hidden;
         background: rgba(255,255,255,0.07);
@@ -268,19 +273,19 @@
         gap: 1rem;
       }
       .ammo-chip{
-        min-width: 11rem;
+        min-width: 8rem;
         text-align: right;
       }
       .ammo-chip strong{
-        font-size: 2.3rem;
+        font-size: 1.5rem;
         line-height: 1;
       }
       #crosshair{
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 1.6rem;
-        height: 1.6rem;
+        width: 1.9rem;
+        height: 1.9rem;
         transform: translate(-50%, -50%);
         pointer-events: none;
       }
@@ -290,23 +295,23 @@
         position: absolute;
         inset: 0;
         margin: auto;
-        background: rgba(255,255,255,0.92);
-        box-shadow: 0 0 14px rgba(88, 220, 255, 0.55);
+        background: rgba(98,243,255,0.9);
+        box-shadow: 0 0 16px rgba(98, 243, 255, 0.72);
       }
       #crosshair::before{
         width: 2px;
-        height: 100%;
+        height: 72%;
       }
       #crosshair::after{
-        width: 100%;
+        width: 72%;
         height: 2px;
       }
       #crosshair span{
         position: absolute;
         inset: 0;
         margin: auto;
-        width: 0.34rem;
-        height: 0.34rem;
+        width: 0.22rem;
+        height: 0.22rem;
         border-radius: 999px;
         background: #fff;
         box-shadow: 0 0 18px rgba(88, 220, 255, 0.8);
@@ -314,10 +319,10 @@
       #center_message{
         position: absolute;
         left: 50%;
-        top: 18%;
-        transform: translateX(-50%);
-        padding: 0.7rem 1rem;
-        border-radius: 999px;
+        top: 12%;
+        transform: translateX(-50%) skewX(-8deg);
+        padding: 0.55rem 0.8rem;
+        border-radius: 0.28rem;
         background: rgba(8, 12, 21, 0.78);
         border: 1px solid rgba(88, 220, 255, 0.18);
         color: var(--text);
@@ -386,8 +391,8 @@
         width: min(70rem, 100%);
         max-height: calc(100vh - 4rem);
         overflow: auto;
-        padding: 1.4rem;
-        border-radius: 1.6rem;
+        padding: 1.2rem;
+        border-radius: 0.6rem 1.8rem 0.6rem 1.2rem;
         background: linear-gradient(180deg, rgba(10, 15, 26, 0.96), rgba(11, 18, 30, 0.88));
         border: 1px solid rgba(88, 220, 255, 0.16);
         box-shadow: 0 26px 70px rgba(0,0,0,0.42);
@@ -522,7 +527,8 @@
           grid-template-columns: 1fr;
         }
         .hud-top{
-          grid-template-columns: 1fr;
+          align-items: stretch;
+          flex-direction: column;
         }
         .hud-bottom{
           flex-direction: column;
@@ -531,4 +537,4 @@
         .health-shell{
           width: 100%;
         }
-      }</style></head><body><div id="menu"><div class="menu-card"><span class="menu-kicker">MathShield / 3D FPS</span><h1>Three FPS: Uprising</h1><p class="menu-copy">Survive one-minute rounds, vote on the next map, switch guns, and grab one upgrade between waves.</p><div class="control-grid"><div class="tutorial-panel"><strong>How the run works</strong><div class="tutorial-step"><span class="step-number">1</span><div class="step-copy"><strong>Start wave 1</strong> <span>Press start and the first wave begins right away.</span></div></div><div class="tutorial-step"><span class="step-number">2</span><div class="step-copy"><strong>Pick the next setup</strong> <span>After a wave ends, choose a map, one upgrade, and a gun.</span></div></div><div class="tutorial-step"><span class="step-number">3</span><div class="step-copy"><strong>Survive longer</strong> <span>Later waves unlock better guns and tougher enemies.</span></div></div></div><div class="tutorial-panel"><strong>Core controls</strong><div class="key-row"><span class="keycap">WASD Move</span> <span class="keycap">Mouse Aim / Shoot</span> <span class="keycap">Shift Sprint</span> <span class="keycap">C Slide</span> <span class="keycap">Space Jump</span> <span class="keycap">R Reload</span> <span class="keycap">1 / 2 / 3 Guns</span></div><span>Click once in the arena to lock the mouse. If you go down, the run resets to wave 1.</span></div></div><button id="start_game">Start game</button><div id="progress_shell"><div id="progress"></div></div></div></div><div id="game_hud"><div class="hud-top"><div class="hud-cluster"><div class="hud-panel"><span class="hud-label">Wave status</span><div class="hud-stats"><div><span class="hud-label">Wave</span> <span class="hud-value" id="wave_value">1</span></div><div><span class="hud-label">Time</span> <span class="hud-value" id="timer_value">1:00</span></div><div><span class="hud-label">Map</span> <span class="hud-value" id="map_value">Neon Docks</span></div><div><span class="hud-label">Hostiles</span> <span class="hud-value" id="enemy_value">0</span></div></div></div><div class="hud-panel weapon-panel"><span class="hud-label">Loadout</span> <strong id="weapon_name">Ranger AR</strong> <small id="weapon_meta">18 dmg • 9.1 rps • 30 mag</small><ul class="perk-list" id="perk_list"></ul></div></div></div><div id="crosshair"><span></span></div><div id="center_message"></div><div id="enemy_bars"></div><div class="hud-bottom"><div class="status-stack"><div class="hud-panel"><div class="health-meta"><div><span class="hud-label">Health</span> <span class="hud-value"><span id="health_value">100</span> / <span id="health_max">100</span></span></div></div><div class="health-shell"><div id="health_progress"></div></div></div></div><div class="hud-panel ammo-chip"><span class="hud-label">Ammo</span> <strong><span id="current_ammo">0</span> <span style="opacity:0.4;">/</span> <span id="max_ammo">0</span></strong></div></div><div id="intermission"><div class="intermission-card"><span class="menu-kicker">Intermission</span><h2 id="intermission_title">Vote the first arena</h2><p class="menu-copy" id="intermission_subtitle">Pick a map, a gun, and an upgrade before the next drop.</p><section class="choice-section"><span class="hud-label">Map vote</span><div class="choice-grid" id="map_vote_choices"></div></section><section class="choice-section"><span class="hud-label">Upgrade pick</span><div class="choice-grid" id="upgrade_choices"></div></section><section class="choice-section"><span class="hud-label">Loadout</span><div class="choice-grid" id="weapon_choices"></div></section><button id="continue_wave">Drop in</button></div></div></div><my-app></my-app><script src="main.03d5f1796de41408372b.js"></script></body></html>
+      }</style></head><body><div id="menu"><div class="menu-card"><span class="menu-kicker">MathShield / 3D FPS</span><h1>Three FPS: Uprising</h1><p class="menu-copy">Survive fast one-minute waves. Pick a weapon, slide out of danger, and clear enemies before the clock runs out.</p><div class="control-grid"><div class="tutorial-panel"><strong>How the run works</strong><div class="tutorial-step"><span class="step-number">1</span><div class="step-copy"><strong>Start wave 1</strong> <span>Press start. Wave 1 begins as soon as the assets finish loading.</span></div></div><div class="tutorial-step"><span class="step-number">2</span><div class="step-copy"><strong>Pick the next setup</strong> <span>Between waves, choose one map, one upgrade, and one weapon.</span></div></div><div class="tutorial-step"><span class="step-number">3</span><div class="step-copy"><strong>Survive longer</strong> <span>Each wave adds more enemies and higher damage.</span></div></div></div><div class="tutorial-panel"><strong>Core controls</strong><div class="key-row"><span class="keycap">WASD Move</span> <span class="keycap">Mouse Aim / Shoot</span> <span class="keycap">Shift Sprint</span> <span class="keycap">C Slide</span> <span class="keycap">Space Jump</span> <span class="keycap">R Reload</span> <span class="keycap">1 / 2 / 3 Guns</span></div><span>Click the arena once to lock your mouse. Press Esc to release it.</span></div></div><button id="start_game">Start game</button><div id="progress_shell"><div id="progress"></div></div></div></div><div id="game_hud"><div class="hud-top"><div class="hud-cluster"><div class="hud-panel"><span class="hud-label">Wave status</span><div class="hud-stats"><div><span class="hud-label">Wave</span> <span class="hud-value" id="wave_value">1</span></div><div><span class="hud-label">Time</span> <span class="hud-value" id="timer_value">1:00</span></div><div><span class="hud-label">Map</span> <span class="hud-value" id="map_value">Neon Docks</span></div><div><span class="hud-label">Hostiles</span> <span class="hud-value" id="enemy_value">0</span></div></div></div><div class="hud-panel weapon-panel"><span class="hud-label">Loadout</span> <strong id="weapon_name">Ranger AR</strong> <small id="weapon_meta">18 dmg • 9.1 rps • 30 mag</small><ul class="perk-list" id="perk_list"></ul></div></div></div><div id="crosshair"><span></span></div><div id="center_message"></div><div id="enemy_bars"></div><div class="hud-bottom"><div class="status-stack"><div class="hud-panel"><div class="health-meta"><div><span class="hud-label">Health</span> <span class="hud-value"><span id="health_value">100</span> / <span id="health_max">100</span></span></div></div><div class="health-shell"><div id="health_progress"></div></div></div></div><div class="hud-panel ammo-chip"><span class="hud-label">Ammo</span> <strong><span id="current_ammo">0</span> <span style="opacity:0.4;">/</span> <span id="max_ammo">0</span></strong></div></div><div id="intermission"><div class="intermission-card"><span class="menu-kicker">Intermission</span><h2 id="intermission_title">Vote the first arena</h2><p class="menu-copy" id="intermission_subtitle">Pick a map, a gun, and an upgrade before the next drop.</p><section class="choice-section"><span class="hud-label">Map vote</span><div class="choice-grid" id="map_vote_choices"></div></section><section class="choice-section"><span class="hud-label">Upgrade pick</span><div class="choice-grid" id="upgrade_choices"></div></section><section class="choice-section"><span class="hud-label">Loadout</span><div class="choice-grid" id="weapon_choices"></div></section><button id="continue_wave">Drop in</button></div></div></div><my-app></my-app><script src="main.f48bb164dc0bb52d5095.js"></script></body></html>

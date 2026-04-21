@@ -35,7 +35,7 @@ export default function ArcadePage() {
           <p className="section-kicker">Arcade Lab</p>
           <h1 className="arcade-title">Shooters and racers</h1>
           <p className="arcade-copy">
-            Real imported HTML5 games only. FPS games, shooters, racers, and skill games with art and controls on each page.
+            Imported browser games for quick breaks. The main MathShield goal is still learning games, logic practice, and student tools.
           </p>
         </div>
 

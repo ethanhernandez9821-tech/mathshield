@@ -95,6 +95,7 @@ export default function ImportedGamePage({
               src={src}
               title={title}
               className={`game-embed${crosshair ? " game-embed--crosshair" : ""}`}
+              allow="fullscreen; gamepad; accelerometer; gyroscope"
               allowFullScreen
             />
           ) : (
@@ -127,6 +128,9 @@ export default function ImportedGamePage({
           <p className="section-kicker">Controls</p>
           <h2>How to play</h2>
           <p>{howToPlay}</p>
+          <p className="mobile-support-note">
+            On phones and tablets, open the game and use on-screen controls when the game supports them. Three FPS now has touch controls for move, aim, shoot, jump, slide, sprint, and reload.
+          </p>
           <div className="tag-row">
             {tags.map((tag) => (
               <span key={tag} className="tag">

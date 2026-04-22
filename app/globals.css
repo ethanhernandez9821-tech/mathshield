@@ -528,6 +528,13 @@ a {
   gap: 12px;
 }
 
+.mobile-support-note {
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(107, 239, 255, 0.08);
+  border: 1px solid rgba(107, 239, 255, 0.16);
+}
+
 .tag-row {
   flex-wrap: wrap;
 }
@@ -844,7 +851,15 @@ a {
   }
 
   .game-embed {
-    height: 58vh;
+    height: 68vh;
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 640px) {
+  .game-embed {
+    height: 76vh;
+    min-height: 520px;
   }
 }
 

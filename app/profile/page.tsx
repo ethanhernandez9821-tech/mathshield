@@ -38,8 +38,8 @@ export default function ProfilePage() {
   }
 
   const levelMeta = getLevelMeta(user.xp);
-  const driftBossProgress = getGameProgress(user, "drift-boss");
-  const driftProgressPercent = Math.min(100, (driftBossProgress.playSeconds / 900) * 100);
+  const threeFpsProgress = getGameProgress(user, "three-fps");
+  const threeFpsProgressPercent = Math.min(100, (threeFpsProgress.playSeconds / 900) * 100);
 
   return (
     <main className="page-shell">
@@ -74,17 +74,17 @@ export default function ProfilePage() {
           </article>
 
           <article className="stat-card">
-            <p className="section-kicker">Drift Boss</p>
-            <h2>{formatMinutes(driftBossProgress.playSeconds)}</h2>
+            <p className="section-kicker">Three FPS</p>
+            <h2>{formatMinutes(threeFpsProgress.playSeconds)}</h2>
             <p>Total tracked play time while signed in.</p>
           </article>
 
           <article className="stat-card">
             <p className="section-kicker">15 Minute Goal</p>
-            <h2>{Math.round(driftProgressPercent)}%</h2>
-            <p>Your saved progress toward the current Drift Boss play challenge.</p>
+            <h2>{Math.round(threeFpsProgressPercent)}%</h2>
+            <p>Your saved progress toward the current Three FPS play challenge.</p>
             <div className="progress-rail">
-              <div className="progress-fill" style={{ width: `${driftProgressPercent}%` }} />
+              <div className="progress-fill" style={{ width: `${threeFpsProgressPercent}%` }} />
             </div>
           </article>
         </section>

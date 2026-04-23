@@ -138,7 +138,7 @@ export default function ImportedGamePage({
               </span>
             ))}
           </div>
-          <GameProgressCard slug={slug} />
+          <GameProgressCard slug={slug} active={hasLoaded} />
           <p className="challenge-copy">
             <strong>Source.</strong> {sourceNote}
           </p>

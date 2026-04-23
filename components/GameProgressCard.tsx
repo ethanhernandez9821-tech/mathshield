@@ -17,16 +17,18 @@ function formatPlayTime(seconds: number) {
 function GameProgressCardInner({
   slug,
   user,
+  active,
 }: {
   slug: string;
   user: StoredUser | null;
+  active: boolean;
 }) {
   const storedSeconds = getGameProgress(user, slug).playSeconds;
   const [sessionSeconds, setSessionSeconds] = useState(0);
   const pendingSeconds = useRef(0);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !active) {
       return;
     }
 
@@ -56,7 +58,7 @@ function GameProgressCardInner({
       window.clearInterval(interval);
       flushProgress();
     };
-  }, [user, slug]);
+  }, [active, user, slug]);
 
   const playSeconds = storedSeconds + sessionSeconds;
   const cappedSeconds = Math.min(playSeconds, TARGET_SECONDS);
@@ -92,8 +94,14 @@ function GameProgressCardInner({
   );
 }
 
-export default function GameProgressCard({ slug }: { slug: string }) {
+export default function GameProgressCard({
+  slug,
+  active = true,
+}: {
+  slug: string;
+  active?: boolean;
+}) {
   const user = useCurrentUser();
 
-  return <GameProgressCardInner key={`${user?.id ?? "guest"}:${slug}`} slug={slug} user={user} />;
+  return <GameProgressCardInner key={`${user?.id ?? "guest"}:${slug}:${active ? "active" : "idle"}`} slug={slug} user={user} active={active} />;
 }

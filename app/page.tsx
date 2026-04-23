@@ -35,7 +35,7 @@ export default function Home() {
             <p className="section-kicker">Quick Start</p>
             <h1 className="dashboard-title">Open a game fast.</h1>
             <p className="dashboard-copy">
-              MathShield is built for students: quick learning games now, more math and study tools coming next.
+              MathShield is focused on a tighter arcade set right now, with the math side being rebuilt into a cleaner learning lab next.
             </p>
 
             <div className="action-row">
@@ -55,13 +55,13 @@ export default function Home() {
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
               <h2>Arcade games</h2>
-              <p>Skill games for reaction time, focus, and problem solving.</p>
+              <p>Four live imported games: 3 FPS, HexGL, Drift Boss, and VibeFPS.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
               <p className="section-kicker">Math Lab</p>
               <h2>Math games</h2>
-              <p>Math practice and logic games for actual study breaks.</p>
+              <p>The learning side is still here, but it is being rebuilt instead of padded with filler.</p>
             </Link>
           </div>
 
@@ -69,19 +69,19 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>A rotating pick from the student game library.</p>
+              <p>A rotating pick from the four-game arcade lineup.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Shooter Mix</p>
-              <h3>FPS + action</h3>
-              <p>Action games stay separate from the future learning section.</p>
+              <p className="section-kicker">Lineup</p>
+              <h3>3 FPS + VibeFPS</h3>
+              <p>Two shooters stay live, while Drift Boss and HexGL cover driving and racing.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Racing</p>
-              <h3>Arcade speed</h3>
-              <p>More educational games and math tools are planned.</p>
+              <p className="section-kicker">Math Lab</p>
+              <h3>Rebuild in progress</h3>
+              <p>Study and math tools are being rebuilt before more titles go back on the site.</p>
             </article>
           </div>
         </div>
@@ -113,8 +113,8 @@ export default function Home() {
 
           <section className="side-card">
             <p className="section-kicker">What Changed</p>
-            <h3>Arcade update</h3>
-            <p>MathShield is being shaped as a student hub first, with games organized by purpose.</p>
+            <h3>Catalog cleanup</h3>
+            <p>The site now keeps only the four arcade games you actually wanted visible.</p>
           </section>
         </aside>
       </section>

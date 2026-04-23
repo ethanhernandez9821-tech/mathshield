@@ -33,9 +33,9 @@ export default function ArcadePage() {
       <section className="arcade-header">
         <div>
           <p className="section-kicker">Arcade Lab</p>
-          <h1 className="arcade-title">Shooters and racers</h1>
+          <h1 className="arcade-title">Four live arcade games</h1>
           <p className="arcade-copy">
-            Imported browser games for quick breaks. The main MathShield goal is still learning games, logic practice, and student tools.
+            The arcade is trimmed down to the strongest live set right now: 3 FPS, VibeFPS, HexGL, and Drift Boss.
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function ArcadePage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search shooters and racing games..."
+          placeholder="Search 3 FPS, VibeFPS, HexGL, or Drift Boss..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

@@ -35,7 +35,7 @@ export default function ArcadePage() {
           <p className="section-kicker">Arcade Lab</p>
           <h1 className="arcade-title">Live arcade lineup</h1>
           <p className="arcade-copy">
-            The arcade now mixes the core games with a couple of real imported FPS builds and an official Cookie Clicker launcher.
+            The arcade now focuses on playable imports and the strongest in-site builds. No redirect launchers, no dead cards.
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function ArcadePage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search FPS games, Cookie Clicker, HexGL, or Drift Boss..."
+          placeholder="Search FPS games, HexGL, Drift Boss..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

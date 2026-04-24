@@ -41,13 +41,22 @@ export const games: Game[] = [
     theme: "cyan",
   },
   {
-    slug: "shooter-game",
-    title: "Shooter Game",
-    description: "Three.js FPS import with pointer-lock aiming, sprint, jumping, and impact particles.",
+    slug: "enari-engine",
+    title: "Enari Engine",
+    description: "Imported Three.js FPS with weapon models, physics, and a full arena build.",
     category: "arcade",
-    thumbnail: "/thumbnails/shooter-game.png",
+    thumbnail: "/thumbnails/enari-engine.webp",
     status: "live",
     theme: "violet",
+  },
+  {
+    slug: "nemesis",
+    title: "Nemesis",
+    description: "Classic WebGL FPS with enemies, health pickups, radar, score, and mouse aiming.",
+    category: "arcade",
+    thumbnail: "/thumbnails/nemesis.jpg",
+    status: "live",
+    theme: "lime",
   },
   {
     slug: "hexgl",
@@ -66,15 +75,6 @@ export const games: Game[] = [
     thumbnail: "/thumbnails/drift-boss.png",
     status: "live",
     theme: "lime",
-  },
-  {
-    slug: "cookie-clicker",
-    title: "Cookie Clicker",
-    description: "Official Cookie Clicker launcher that opens the real DashNet game.",
-    category: "arcade",
-    thumbnail: "/thumbnails/cookie-clicker-official.svg",
-    status: "live",
-    theme: "gold",
   },
 ];
 

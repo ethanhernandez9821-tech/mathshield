@@ -55,7 +55,7 @@ export default function Home() {
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
               <h2>Arcade games</h2>
-              <p>FPS imports, the main lineup, and an official Cookie Clicker launcher all live in one arcade library.</p>
+              <p>FPS imports and the strongest playable builds live in one cleaner arcade library.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
@@ -75,7 +75,7 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Shooters</p>
               <h3>More FPS imports</h3>
-              <p>Three FPS and VibeFPS now sit beside two imported open-source browser FPS games.</p>
+              <p>Three FPS and VibeFPS now sit beside real imported open-source browser FPS games.</p>
             </article>
 
             <article className="info-card">
@@ -114,7 +114,7 @@ export default function Home() {
           <section className="side-card">
             <p className="section-kicker">What Changed</p>
             <h3>Catalog cleanup</h3>
-            <p>The site now keeps only the four arcade games you actually wanted visible.</p>
+            <p>Redirect launchers and old filler cards are gone. The arcade is focused on playable games with real pages.</p>
           </section>
         </aside>
       </section>

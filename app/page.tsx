@@ -55,7 +55,7 @@ export default function Home() {
             <Link href="/arcade" className="quick-link quick-link--arcade">
               <p className="section-kicker">Arcade Lab</p>
               <h2>Arcade games</h2>
-              <p>Four live imported games: 3 FPS, HexGL, Drift Boss, and VibeFPS.</p>
+              <p>FPS imports, the main lineup, and an official Cookie Clicker launcher all live in one arcade library.</p>
             </Link>
 
             <Link href="/games" className="quick-link quick-link--math">
@@ -69,13 +69,13 @@ export default function Home() {
             <article className="info-card">
               <p className="section-kicker">Today</p>
               <h3>{featuredGame.title}</h3>
-              <p>A rotating pick from the four-game arcade lineup.</p>
+              <p>A rotating pick from the live arcade lineup.</p>
             </article>
 
             <article className="info-card">
-              <p className="section-kicker">Lineup</p>
-              <h3>3 FPS + VibeFPS</h3>
-              <p>Two shooters stay live, while Drift Boss and HexGL cover driving and racing.</p>
+              <p className="section-kicker">Shooters</p>
+              <h3>More FPS imports</h3>
+              <p>Three FPS and VibeFPS now sit beside two imported open-source browser FPS games.</p>
             </article>
 
             <article className="info-card">

@@ -535,6 +535,21 @@ a {
   border: 1px solid rgba(107, 239, 255, 0.16);
 }
 
+.mobile-controls-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(120, 220, 255, 0.16);
+  background: rgba(120, 220, 255, 0.08);
+}
+
+.mobile-controls-card h3 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.15rem;
+}
+
 .tag-row {
   flex-wrap: wrap;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GameProgressCard from "@/components/GameProgressCard";
 import TopBar from "@/components/TopBar";
 
@@ -20,6 +20,8 @@ type ImportedGamePageProps = {
   deferLoad?: boolean;
   previewImage?: string;
   loadLabel?: string;
+  mobileControls?: string[];
+  mobileSupportNote?: string;
 };
 
 export default function ImportedGamePage({
@@ -38,9 +40,27 @@ export default function ImportedGamePage({
   deferLoad = false,
   previewImage,
   loadLabel = "Load game",
+  mobileControls = [],
+  mobileSupportNote,
 }: ImportedGamePageProps) {
   const [frameKey, setFrameKey] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(!deferLoad);
+  const [isMobileClient, setIsMobileClient] = useState(false);
+
+  useEffect(() => {
+    const updateTouchState = () => {
+      if (typeof window === "undefined") return;
+
+      const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
+      const smallScreen = window.innerWidth <= 1024;
+      const touchPoints = navigator.maxTouchPoints > 0;
+      setIsMobileClient((coarsePointer || touchPoints) && smallScreen);
+    };
+
+    updateTouchState();
+    window.addEventListener("resize", updateTouchState);
+    return () => window.removeEventListener("resize", updateTouchState);
+  }, []);
 
   return (
     <main className="page-shell">
@@ -128,9 +148,25 @@ export default function ImportedGamePage({
           <p className="section-kicker">Controls</p>
           <h2>How to play</h2>
           <p>{howToPlay}</p>
-          <p className="mobile-support-note">
-            On phones and tablets, open the game and use on-screen controls when the game supports them. Three FPS now has touch controls for move, aim, shoot, jump, slide, sprint, and reload.
-          </p>
+          {isMobileClient ? (
+            mobileControls.length > 0 ? (
+              <div className="mobile-controls-card">
+                <p className="section-kicker">Mobile Controls</p>
+                <h3>Touch layout</h3>
+                <div className="tag-row">
+                  {mobileControls.map((control) => (
+                    <span key={control} className="tag">
+                      {control}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mobile-support-note">
+                {mobileSupportNote ?? "This imported build is desktop-first and does not ship with on-screen touch controls yet."}
+              </p>
+            )
+          ) : null}
           <div className="tag-row">
             {tags.map((tag) => (
               <span key={tag} className="tag">

@@ -18,6 +18,7 @@ export default function ThreeFpsPage() {
       previewImage="/thumbs/three-fps"
       loadLabel="Load FPS"
       crosshair
+      mobileControls={["Move joystick", "Look pad", "Shoot", "Jump", "Slide", "Sprint", "Reload"]}
     />
   );
 }

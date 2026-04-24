@@ -18,6 +18,7 @@ export default function VibeFpsPage() {
       previewImage="/thumbnails/vibe-fps.png"
       loadLabel="Load shooter"
       crosshair
+      mobileControls={["Move joystick", "Look pad", "Shoot", "Jump", "Reload"]}
     />
   );
 }

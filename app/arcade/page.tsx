@@ -33,9 +33,9 @@ export default function ArcadePage() {
       <section className="arcade-header">
         <div>
           <p className="section-kicker">Arcade Lab</p>
-          <h1 className="arcade-title">Four live arcade games</h1>
+          <h1 className="arcade-title">Live arcade lineup</h1>
           <p className="arcade-copy">
-            The arcade is trimmed down to the strongest live set right now: 3 FPS, VibeFPS, HexGL, and Drift Boss.
+            The arcade now mixes the core games with a couple of real imported FPS builds and an official Cookie Clicker launcher.
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export default function ArcadePage() {
         <input
           className="ui-input"
           type="text"
-          placeholder="Search 3 FPS, VibeFPS, HexGL, or Drift Boss..."
+          placeholder="Search FPS games, Cookie Clicker, HexGL, or Drift Boss..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
